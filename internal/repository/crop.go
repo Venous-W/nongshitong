@@ -3,6 +3,7 @@ package repository
 import (
 	"nongshaitong/internal/db"
 	"nongshaitong/internal/model"
+	"strings"
 )
 
 // GetAllCrops 返回所有作物/场所列表，按 sort_order 升序排列。
@@ -27,14 +28,14 @@ func GetAllCrops() ([]model.Crop, error) {
 	return list, nil
 }
 
-// GetCropsByCategory 返回在指定分类下有产品关联的作物/场所列表，用于查询页动态加载按钮。
-// 逻辑：先找该分类（及其所有子分类）下的上架产品，再取这些产品关联的作物去重。
-// categoryID 传 0 时返回所有有产品的作物。
-func GetCropsByCategory(categoryID int64) ([]model.Crop, error) {
+// GetCropsByCategories 返回在指定多个分类下有产品关联的作物/场所列表，用于查询页动态加载按钮。
+// 逻辑：先找这些分类及其所有子分类下的上架产品，再取这些产品关联的作物去重。
+// categoryIDs 为空时返回所有有产品的作物。
+func GetCropsByCategories(categoryIDs []int64) ([]model.Crop, error) {
 	var query string
 	var args []interface{}
 
-	if categoryID == 0 {
+	if len(categoryIDs) == 0 {
 		// 不限分类，取所有上架产品关联的作物
 		query = `
 			SELECT DISTINCT c.id, c.name, c.sort_order
@@ -43,16 +44,17 @@ func GetCropsByCategory(categoryID int64) ([]model.Crop, error) {
 			JOIN products p ON p.id = pc.product_id AND p.is_active = 1
 			ORDER BY c.sort_order ASC, c.id ASC`
 	} else {
-		// 先收集该 categoryID 以及其所有子分类 id，再查关联作物
+		ph := makePlaceholders(len(categoryIDs))
 		query = `
 			SELECT DISTINCT c.id, c.name, c.sort_order
 			FROM crops c
 			JOIN product_crops pc ON pc.crop_id = c.id
 			JOIN products p ON p.id = pc.product_id AND p.is_active = 1
-			WHERE p.category_id = ?
-			   OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?)
+			WHERE p.category_id IN (` + ph + `)
+			   OR p.category_id IN (SELECT id FROM categories WHERE parent_id IN (` + ph + `))
 			ORDER BY c.sort_order ASC, c.id ASC`
-		args = append(args, categoryID, categoryID)
+		args = append(args, toInterfaceSlice(categoryIDs)...)
+		args = append(args, toInterfaceSlice(categoryIDs)...)
 	}
 
 	rows, err := db.DB.Query(query, args...)
@@ -72,30 +74,40 @@ func GetCropsByCategory(categoryID int64) ([]model.Crop, error) {
 	return list, nil
 }
 
-// GetTargetsByCategoryAndCrops 返回在指定分类+作物组合下有产品关联的防治对象列表。
+// GetTargetsByCategoriesAndCrops 返回在指定多个分类+作物组合下有产品关联的防治对象列表。
 // 用于查询页"选防治对象"步骤的动态加载。
-// cropIDs 为空时只按分类过滤；categoryID 为 0 时不过滤分类。
+// cropIDs 为空时只按分类过滤；categoryIDs 为空时不过滤分类。
 // 多个 cropID 之间是 OR 关系（产品关联任一作物即可）。
-func GetTargetsByCategoryAndCrops(categoryID int64, cropIDs []int64) ([]model.Target, error) {
-	// 构造 IN 子句占位符
-	cropFilter := ""
+func GetTargetsByCategoriesAndCrops(categoryIDs []int64, cropIDs []int64) ([]model.Target, error) {
 	var args []interface{}
 
-	if categoryID > 0 {
-		args = append(args, categoryID, categoryID)
-	}
-
 	if len(cropIDs) > 0 {
-		placeholders := makePlaceholders(len(cropIDs))
-		cropFilter = `AND pc.crop_id IN (` + placeholders + `)`
 		for _, id := range cropIDs {
 			args = append(args, id)
 		}
 	}
 
+	if len(categoryIDs) > 0 {
+		for _, id := range categoryIDs {
+			args = append(args, id, id)
+		}
+	}
+
+	// 构造分类过滤条件
 	catFilter := ""
-	if categoryID > 0 {
-		catFilter = `AND (p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`
+	if len(categoryIDs) > 0 {
+		var catConds []string
+		for range categoryIDs {
+			catConds = append(catConds, `(p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`)
+		}
+		catFilter = "AND (" + strings.Join(catConds, " OR ") + ")"
+	}
+
+	// 构造作物过滤条件
+	cropJoin := ""
+	if len(cropIDs) > 0 {
+		ph := makePlaceholders(len(cropIDs))
+		cropJoin = `JOIN product_crops pc ON pc.product_id = p.id AND pc.crop_id IN (` + ph + `)`
 	}
 
 	query := `
@@ -103,27 +115,11 @@ func GetTargetsByCategoryAndCrops(categoryID int64, cropIDs []int64) ([]model.Ta
 		FROM targets t
 		JOIN product_targets pt ON pt.target_id = t.id
 		JOIN products p ON p.id = pt.product_id AND p.is_active = 1
-		` + func() string {
-		if len(cropIDs) > 0 {
-			return `JOIN product_crops pc ON pc.product_id = p.id ` + cropFilter
-		}
-		return ""
-	}() + `
+		` + cropJoin + `
 		WHERE 1=1 ` + catFilter + `
 		ORDER BY t.type ASC, t.sort_order ASC, t.id ASC`
 
-	// 重新整理参数顺序（cropIDs 在前，catFilter 在后）
-	var finalArgs []interface{}
-	if len(cropIDs) > 0 {
-		for _, id := range cropIDs {
-			finalArgs = append(finalArgs, id)
-		}
-	}
-	if categoryID > 0 {
-		finalArgs = append(finalArgs, categoryID, categoryID)
-	}
-
-	rows, err := db.DB.Query(query, finalArgs...)
+	rows, err := db.DB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,4 +165,13 @@ func DeleteCrop(id int64) error {
 	}
 	_, err := db.DB.Exec(`DELETE FROM crops WHERE id=?`, id)
 	return err
+}
+
+// toInterfaceSlice 将 []int64 转为 []interface{}，用于可变参数 SQL 查询。
+func toInterfaceSlice(s []int64) []interface{} {
+	r := make([]interface{}, len(s))
+	for i, v := range s {
+		r[i] = v
+	}
+	return r
 }

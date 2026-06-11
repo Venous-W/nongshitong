@@ -4,7 +4,7 @@ package db
 // 表结构说明：
 //   - categories  : 分类树，parent_id=0 为顶级
 //   - crops       : 作物/使用场所（统一存储，不区分农作物和场所）
-//   - targets     : 防治对象，type 字段区分杂草/害虫/病害
+//   - targets     : 防治对象，type 字段区分杂草/害虫/病害/调节剂
 //   - products    : 农药产品，category_id 指向最深层分类
 //   - product_crops   : 产品↔作物多对多关联
 //   - product_targets : 产品↔防治对象多对多关联
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS crops (
     sort_order INTEGER NOT NULL DEFAULT 0
 );
 
--- 防治对象表：type 取值 weed(杂草) / pest(害虫) / disease(病害)
+-- 防治对象表：type 取值 weed(杂草) / pest(害虫) / disease(病害) / regulator(调节剂)
 CREATE TABLE IF NOT EXISTS targets (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT    NOT NULL UNIQUE,

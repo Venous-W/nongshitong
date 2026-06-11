@@ -20,10 +20,10 @@ func GetAllCrops(c *gin.Context) {
 }
 
 // GetFilterCrops 根据分类动态返回"有产品关联"的作物列表，用于查询页步骤三的按钮渲染。
-// GET /api/filter/crops?category_id=1
+// GET /api/filter/crops?category_ids=1,2
 func GetFilterCrops(c *gin.Context) {
-	categoryID := parseQueryInt64(c, "category_id", 0)
-	list, err := repository.GetCropsByCategory(categoryID)
+	categoryIDs := parseQueryInt64List(c, "category_ids")
+	list, err := repository.GetCropsByCategories(categoryIDs)
 	if err != nil {
 		apiFail(c, "查询作物失败: "+err.Error())
 		return
@@ -32,12 +32,12 @@ func GetFilterCrops(c *gin.Context) {
 }
 
 // GetFilterTargets 根据分类+作物动态返回"有产品关联"的防治对象列表，用于查询页步骤四的按钮渲染。
-// GET /api/filter/targets?category_id=1&crop_ids=2,3,5
+// GET /api/filter/targets?category_ids=1,2&crop_ids=2,3,5
 func GetFilterTargets(c *gin.Context) {
-	categoryID := parseQueryInt64(c, "category_id", 0)
+	categoryIDs := parseQueryInt64List(c, "category_ids")
 	cropIDs := parseQueryInt64List(c, "crop_ids")
 
-	list, err := repository.GetTargetsByCategoryAndCrops(categoryID, cropIDs)
+	list, err := repository.GetTargetsByCategoriesAndCrops(categoryIDs, cropIDs)
 	if err != nil {
 		apiFail(c, "查询防治对象失败: "+err.Error())
 		return

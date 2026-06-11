@@ -15,7 +15,6 @@
         }
         body { background: var(--bg); font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
 
-        /* 标签按钮通用样式 */
         .tag-btn {
             display: inline-flex; align-items: center; gap: 4px;
             padding: 5px 14px; border-radius: 4px; cursor: pointer; user-select: none;
@@ -29,106 +28,100 @@
         }
         .tag-btn.disabled { background: #FAFAFA; color: #BDBDBD; border-color: #EEEEEE; cursor: default; pointer-events: none; }
 
-        /* 面包屑导航 */
         .breadcrumb { font-size: 12px; color: #888; }
         .breadcrumb span { color: var(--green); font-weight: 500; }
 
-        /* 产品表格 */
         .product-table th { background: #F0F4F0; font-weight: 600; color: #333; font-size: 13px; }
         .product-table td { font-size: 13px; vertical-align: top; }
         .product-table tr:hover td { background: #F9FBF9; }
 
-        /* 高亮标签（已选中的作物/防治对象在结果中高亮显示） */
         .tag-hi { background: var(--green-light); color: var(--green); border: 1px solid var(--green); font-weight: 500; }
         .tag-normal { background: #F5F5F5; color: #555; border: 1px solid #DDD; }
         .tag-item { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; margin: 2px; }
 
-        /* 弹层 */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 50; display: flex; align-items: center; justify-content: center; }
         .modal-box { background: #fff; border-radius: 8px; width: 600px; max-height: 80vh; overflow-y: auto; padding: 24px; position: relative; }
 
-        /* 搜索框 */
         .search-input { width: 100%; padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; }
         .search-input:focus { border-color: var(--green); box-shadow: 0 0 0 2px #c8e6c9; }
 
-        /* 侧边栏 */
-        .sidebar { position: sticky; top: 72px; }
-
-        /* 分步骤区域标题 */
         .step-label { font-size: 12px; color: #888; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
         .step-num { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        /* 展开/收起按钮 */
         .expand-btn { font-size: 12px; color: var(--green); cursor: pointer; }
         .expand-btn:hover { text-decoration: underline; }
 
-        /* 错误提示 */
         .error-message { color: #e53e3e; font-size: 13px; margin-top: 4px; }
+
+        /* 当前筛选卡片 */
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 10px; border-radius: 12px; font-size: 12px;
+            background: var(--green-light); color: var(--green); border: 1px solid #C8E6C9;
+        }
+        .filter-chip .remove {
+            cursor: pointer; font-size: 14px; line-height: 1; margin-left: 2px; color: #999;
+        }
+        .filter-chip .remove:hover { color: #C62828; }
     </style>
 </head>
 <body>
 
 <!-- ── 顶部导航 ─────────────────────────────────────────────────────────── -->
 <header class="bg-white border-b border-gray-200 h-14 flex items-center px-6 sticky top-0 z-40 shadow-sm">
-    <span class="text-green-800 font-bold text-lg">🌿 农药知识库</span>
+    <span class="text-green-800 font-bold text-lg">农药知识库</span>
     <div class="flex-1 mx-8">
         <input id="searchInput" type="text" placeholder="直接搜索农药名 / 有效成分 / 防治对象 ..." class="search-input" style="max-width:520px">
     </div>
-    <a href="/manage" class="text-sm text-gray-500 hover:text-green-700">管理后台 →</a>
 </header>
 
-<!-- ── 主体布局：左侧筛选 + 右侧摘要侧边栏 ─────────────────────────────── -->
-<div class="max-w-screen-xl mx-auto px-6 py-4 flex gap-4">
+<!-- ── 当前筛选卡片 ─────────────────────────────────────────────────────── -->
+<div id="filterCard" class="max-w-screen-xl mx-auto px-6 pt-3 hidden">
+    <div class="bg-white rounded-lg shadow-sm px-4 py-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-gray-500 mr-1">当前筛选：</span>
+        <div id="filterChips" class="flex flex-wrap items-center gap-1.5"></div>
+        <button id="clearBtn" class="text-xs text-gray-400 border border-gray-200 rounded px-2 py-1 hover:border-red-300 hover:text-red-500 ml-auto hidden">清空</button>
+    </div>
+</div>
 
-    <!-- 左侧主区域（80%） -->
-    <div class="flex-1 min-w-0">
+<!-- ── 主体：单列全宽布局 ──────────────────────────────────────────────── -->
+<div class="max-w-screen-xl mx-auto px-6 py-4">
 
-        <!-- 面包屑 -->
-        <div id="breadcrumb" class="breadcrumb mb-3 h-5"></div>
+    <!-- 面包屑 -->
+    <div id="breadcrumb" class="breadcrumb mb-3 h-5"></div>
 
-        <!-- 步骤一：选大类 -->
-        <div class="bg-white rounded-lg p-4 mb-3 shadow-sm">
-            <div class="step-label"><span class="step-num">1</span> 选择品类</div>
-            <div id="step1Btns" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <!-- 步骤二：选子类（仅在一级有子分类时显示） -->
-        <div id="step2Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
-            <div class="step-label"><span class="step-num">2</span> 选择子类</div>
-            <div id="step2Btns" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <!-- 步骤三：选作物/场所（动态加载） -->
-        <div id="step3Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
-            <div class="step-label"><span class="step-num" id="step3Num">3</span> 选择作物 / 场所 <span class="text-xs text-gray-400">（可多选，OR 逻辑）</span></div>
-            <div id="step3Btns" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <!-- 步骤四：选防治对象（动态加载） -->
-        <div id="step4Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
-            <div class="step-label"><span class="step-num">4</span> 选择防治对象 <span class="text-xs text-gray-400">（可多选，OR 逻辑）</span></div>
-            <div id="step4Btns" class=""></div>
-        </div>
-
-        <!-- 查询结果区 -->
-        <div id="resultWrap" class="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div id="resultHeader" class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <span id="resultCount" class="text-sm text-gray-600">请从上方选择筛选条件</span>
-                <div id="pagination" class="flex items-center gap-2"></div>
-            </div>
-            <div id="resultBody">
-                <div class="text-center py-16 text-gray-400 text-sm">请选择品类后查询</div>
-            </div>
-        </div>
-
+    <!-- 步骤一：选大类（多选） -->
+    <div class="bg-white rounded-lg p-4 mb-3 shadow-sm">
+        <div class="step-label"><span class="step-num">1</span> 选择品类 <span class="text-xs text-gray-400">（可多选）</span></div>
+        <div id="step1Btns" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <!-- 右侧摘要侧边栏（20%） -->
-    <div class="w-52 flex-shrink-0">
-        <div class="sidebar bg-white rounded-lg shadow-sm p-4">
-            <div class="text-xs font-semibold text-gray-500 mb-3">当前筛选</div>
-            <div id="sidebarSummary" class="text-xs text-gray-400">未选择任何条件</div>
-            <button id="clearBtn" class="mt-4 w-full text-xs text-gray-500 border border-gray-200 rounded py-1.5 hover:border-red-300 hover:text-red-500 transition hidden">清空筛选</button>
+    <!-- 步骤二：选子类（多选，仅在一级有子分类时显示） -->
+    <div id="step2Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
+        <div class="step-label"><span class="step-num">2</span> 选择子类 <span class="text-xs text-gray-400">（可多选）</span></div>
+        <div id="step2Btns" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- 步骤三：选作物/场所（动态加载） -->
+    <div id="step3Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
+        <div class="step-label"><span class="step-num" id="step3Num">3</span> 选择作物 / 场所 <span class="text-xs text-gray-400">（可多选）</span></div>
+        <div id="step3Btns" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- 步骤四：选防治对象（动态加载，按一级分类类型过滤） -->
+    <div id="step4Wrap" class="bg-white rounded-lg p-4 mb-3 shadow-sm hidden">
+        <div class="step-label"><span class="step-num">4</span> 选择防治对象 <span class="text-xs text-gray-400">（可多选）</span></div>
+        <div id="step4Btns" class=""></div>
+    </div>
+
+    <!-- 查询结果区 -->
+    <div id="resultWrap" class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div id="resultHeader" class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <span id="resultCount" class="text-sm text-gray-600">请从上方选择筛选条件</span>
+            <div id="pagination" class="flex items-center gap-2"></div>
+        </div>
+        <div id="resultBody">
+            <div class="text-center py-16 text-gray-400 text-sm">请选择品类后查询</div>
         </div>
     </div>
 
@@ -144,69 +137,115 @@
 
 <script>
     // ═══════════════════════════════════════════════════════════════════════════
-    // 状态管理：所有筛选状态集中在此对象，避免散落各处
+    // 一级分类 → 防治对象类型映射（需求4）
     // ═══════════════════════════════════════════════════════════════════════════
-    const state = {
-        categoryTree: [],          // 完整分类树（首次加载后缓存）
-        selectedCatL1: null,       // 选中的一级分类 {id, name, children}
-        selectedCatL2: null,       // 选中的二级分类（没有子分类时为 null）
-        selectedCropIDs: new Set(), // 已选作物 id 集合
-        selectedTargetIDs: new Set(), // 已选防治对象 id 集合
-        keyword: '',               // 搜索关键词
-        page: 1,
-        pageSize: 30,
-        total: 0,
-        loading: false,            // 防止重复请求的状态标志
-        error: null,               // 存储错误信息
+    const L1_TARGET_TYPE_MAP = {
+        '除草': ['weed'],
+        '杀虫': ['pest'],
+        '杀菌': ['disease'],
+        '调节剂': ['regulator'],
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // API 工具函数 - 修复错误处理
+    // 状态管理
+    // ═══════════════════════════════════════════════════════════════════════════
+    const state = {
+        categoryTree: [],
+        selectedCatL1IDs: new Set(),
+        selectedCatL2IDs: new Set(),
+        selectedCropIDs: new Set(),
+        selectedTargetIDs: new Set(),
+        keyword: '',
+        page: 1,
+        pageSize: 30,
+        total: 0,
+        loading: false,
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 工具函数
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** get 发送 GET 请求并返回 data 字段，失败时 throw 错误消息 */
     async function get(url) {
+        if (state.loading) return;
+        state.loading = true;
         try {
-            // 添加loading状态防止重复请求
-            if (state.loading) {
-                console.log('请求正在处理中，跳过重复请求:', url);
-                return;
-            }
-
-            state.loading = true;
             const res = await fetch(url);
-
-            // 检查网络错误
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
-
-            if (json.code !== 0) {
-                throw new Error(json.msg || 'API请求失败');
-            }
-
-            state.loading = false;
+            if (json.code !== 0) throw new Error(json.msg || 'API请求失败');
             return json.data;
-        } catch (error) {
+        } catch (e) {
+            console.error('API请求失败:', e);
+            throw e;
+        } finally {
             state.loading = false;
-            console.error('API请求失败:', error);
-            state.error = error.message;
-
-            // 显示错误信息
-            if (document.getElementById('resultBody')) {
-                document.getElementById('resultBody').innerHTML =
-                    `<div class="text-center py-8 text-red-400 text-sm">查询失败：${error.message}</div>`;
-            }
-
-            throw error;
         }
     }
 
+    function esc(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function makeTagBtn(text, selected, onClick) {
+        const btn = document.createElement('button');
+        btn.className = 'tag-btn' + (selected ? ' selected' : '');
+        btn.textContent = (selected ? '✓ ' : '') + text;
+        btn.addEventListener('click', onClick);
+        return btn;
+    }
+
+    function renderTagGroup(container, items, selectedSet, onChange) {
+        container.innerHTML = '';
+        items.forEach(item => {
+            const btn = document.createElement('button');
+            const selected = selectedSet.has(item.id);
+            btn.className = 'tag-btn' + (selected ? ' selected' : '');
+            btn.textContent = (selected ? '✓ ' : '') + item.name;
+            btn.addEventListener('click', () => {
+                const nowSelected = !selectedSet.has(item.id);
+                onChange(item.id, nowSelected);
+                btn.className = 'tag-btn' + (nowSelected ? ' selected' : '');
+                btn.textContent = (nowSelected ? '✓ ' : '') + item.name;
+                updateFilterCard();
+                updateBreadcrumb();
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    /** 获取当前有效的分类ID列表（需求3：多分类） */
+    function getEffectiveCategoryIDs() {
+        // 对每个选中的一级分类：如果其下有选中二级，用二级；否则用一级
+        const ids = [];
+        state.selectedCatL1IDs.forEach(l1ID => {
+            const l1 = state.categoryTree.find(c => c.id === l1ID);
+            if (!l1) return;
+            const hasL2 = l1.children && l1.children.some(c => state.selectedCatL2IDs.has(c.id));
+            if (!hasL2) {
+                ids.push(l1ID);
+            }
+        });
+        state.selectedCatL2IDs.forEach(id => ids.push(id));
+        return ids;
+    }
+
+    /** 获取当前选中一级分类对应的防治对象类型列表（需求4） */
+    function getTargetTypesFromSelectedL1() {
+        const types = new Set();
+        state.selectedCatL1IDs.forEach(l1ID => {
+            const l1 = state.categoryTree.find(c => c.id === l1ID);
+            if (l1 && L1_TARGET_TYPE_MAP[l1.name]) {
+                L1_TARGET_TYPE_MAP[l1.name].forEach(t => types.add(t));
+            }
+        });
+        return types;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
-    // 初始化：加载分类树，渲染步骤一按钮
+    // 初始化
     // ═══════════════════════════════════════════════════════════════════════════
+
     async function init() {
         try {
             state.categoryTree = await get('/api/categories');
@@ -216,71 +255,114 @@
         }
     }
 
-    /** renderStep1 渲染一级分类按钮（除草/杀虫/杀菌...） */
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 步骤一：多选一级分类
+    // ═══════════════════════════════════════════════════════════════════════════
+
     function renderStep1() {
         const container = document.getElementById('step1Btns');
         container.innerHTML = '';
         state.categoryTree.forEach(cat => {
-            const btn = makeTagBtn(cat.name, state.selectedCatL1?.id === cat.id, () => {
-                if (state.selectedCatL1?.id === cat.id) {
-                    // 再次点击取消
-                    state.selectedCatL1 = null;
+            const selected = state.selectedCatL1IDs.has(cat.id);
+            const btn = makeTagBtn(cat.name, selected, () => {
+                if (selected) {
+                    state.selectedCatL1IDs.delete(cat.id);
+                    // 清除该一级分类下的二级选择
+                    if (cat.children) {
+                        cat.children.forEach(child => state.selectedCatL2IDs.delete(child.id));
+                    }
                 } else {
-                    state.selectedCatL1 = cat;
+                    state.selectedCatL1IDs.add(cat.id);
                 }
-                // 重置下游状态
-                state.selectedCatL2 = null;
                 state.selectedCropIDs.clear();
                 state.selectedTargetIDs.clear();
                 state.page = 1;
                 renderStep1();
                 renderStep2();
+                updateFilterCard();
+                updateBreadcrumb();
             });
             container.appendChild(btn);
         });
+        renderStep2();
     }
 
-    /** renderStep2 根据一级分类是否有子分类，显示/隐藏步骤二 */
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 步骤二：多选二级分类（显示所有已选一级的子类）
+    // ═══════════════════════════════════════════════════════════════════════════
+
     function renderStep2() {
         const wrap = document.getElementById('step2Wrap');
         const container = document.getElementById('step2Btns');
 
-        if (!state.selectedCatL1 || !state.selectedCatL1.children?.length) {
+        if (state.selectedCatL1IDs.size === 0) {
             wrap.classList.add('hidden');
-            // 直接进入步骤三
+            loadAndRenderStep3();
+            return;
+        }
+
+        // 按父级一级分类分组收集子类
+        const groups = []; // [{l1Name, children: [...]}]
+        state.selectedCatL1IDs.forEach(l1ID => {
+            const l1 = state.categoryTree.find(c => c.id === l1ID);
+            if (l1 && l1.children && l1.children.length > 0) {
+                groups.push({ l1Name: l1.name, children: l1.children });
+            }
+        });
+
+        if (groups.length === 0) {
+            wrap.classList.add('hidden');
             loadAndRenderStep3();
             return;
         }
 
         wrap.classList.remove('hidden');
         container.innerHTML = '';
-        state.selectedCatL1.children.forEach(cat => {
-            const btn = makeTagBtn(cat.name, state.selectedCatL2?.id === cat.id, () => {
-                if (state.selectedCatL2?.id === cat.id) {
-                    state.selectedCatL2 = null;
-                } else {
-                    state.selectedCatL2 = cat;
-                }
-                state.selectedCropIDs.clear();
-                state.selectedTargetIDs.clear();
-                state.page = 1;
-                renderStep2();
-                loadAndRenderStep3();
+
+        // 逐组渲染，每组加标题
+        groups.forEach(group => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'mb-3';
+            const label = document.createElement('div');
+            label.className = 'text-xs text-gray-500 mb-1.5 font-medium';
+            label.textContent = '▪ ' + group.l1Name;
+            groupDiv.appendChild(label);
+            const btnWrap = document.createElement('div');
+            btnWrap.className = 'flex flex-wrap gap-1.5';
+            group.children.forEach(cat => {
+                const selected = state.selectedCatL2IDs.has(cat.id);
+                const btn = makeTagBtn(cat.name, selected, () => {
+                    if (selected) {
+                        state.selectedCatL2IDs.delete(cat.id);
+                    } else {
+                        state.selectedCatL2IDs.add(cat.id);
+                    }
+                    state.selectedCropIDs.clear();
+                    state.selectedTargetIDs.clear();
+                    state.page = 1;
+                    renderStep2();
+                    loadAndRenderStep3();
+                    updateFilterCard();
+                    updateBreadcrumb();
+                });
+                btnWrap.appendChild(btn);
             });
-            container.appendChild(btn);
+            groupDiv.appendChild(btnWrap);
+            container.appendChild(groupDiv);
         });
 
-        // 步骤二渲染完，加载步骤三
         loadAndRenderStep3();
     }
 
-    /** loadAndRenderStep3 加载当前分类下有产品的作物列表并渲染按钮 */
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 步骤三：作物/场所（多选）
+    // ═══════════════════════════════════════════════════════════════════════════
+
     async function loadAndRenderStep3() {
         const wrap = document.getElementById('step3Wrap');
-        // 有效分类 = 二级 > 一级
-        const catID = state.selectedCatL2?.id || state.selectedCatL1?.id || 0;
+        const catIDs = getEffectiveCategoryIDs();
 
-        if (!catID) {
+        if (catIDs.length === 0) {
             wrap.classList.add('hidden');
             document.getElementById('step4Wrap').classList.add('hidden');
             renderResult();
@@ -288,15 +370,16 @@
         }
 
         wrap.classList.remove('hidden');
-        // 更新步骤编号（有子分类时是第3步，无子分类时也是第2步显示为3）
-        const stepNum = state.selectedCatL1?.children?.length ? 3 : 2;
+        const stepNum = state.selectedCatL1IDs.size > 0 &&
+            state.categoryTree.some(c => state.selectedCatL1IDs.has(c.id) && c.children && c.children.length > 0)
+            ? 3 : 2;
         document.getElementById('step3Num').textContent = stepNum;
 
         const container = document.getElementById('step3Btns');
         container.innerHTML = '<span class="text-xs text-gray-400">加载中...</span>';
 
         try {
-            const crops = await get('/api/filter/crops?category_id=' + catID);
+            const crops = await get('/api/filter/crops?category_ids=' + catIDs.join(','));
             container.innerHTML = '';
             if (!crops.length) {
                 container.innerHTML = '<span class="text-xs text-gray-400">该分类暂无作物数据</span>';
@@ -306,6 +389,7 @@
                 else state.selectedCropIDs.delete(id);
                 state.page = 1;
                 loadAndRenderStep4();
+                updateFilterCard();
             });
         } catch(e) {
             container.innerHTML = '<span class="text-red-500 text-sm">加载失败</span>';
@@ -314,11 +398,15 @@
         loadAndRenderStep4();
     }
 
-    /** loadAndRenderStep4 加载当前条件下有产品的防治对象列表并渲染（按类型分组） */
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 步骤四：防治对象（多选，按一级分类类型过滤 — 需求4）
+    // ═══════════════════════════════════════════════════════════════════════════
+
     async function loadAndRenderStep4() {
         const wrap = document.getElementById('step4Wrap');
-        const catID = state.selectedCatL2?.id || state.selectedCatL1?.id || 0;
-        if (!catID) {
+        const catIDs = getEffectiveCategoryIDs();
+
+        if (catIDs.length === 0) {
             wrap.classList.add('hidden');
             renderResult();
             return;
@@ -329,48 +417,59 @@
         container.innerHTML = '<span class="text-xs text-gray-400">加载中...</span>';
 
         const cropParam = [...state.selectedCropIDs].join(',');
-        const url = '/api/filter/targets?category_id=' + catID + (cropParam ? '&crop_ids=' + cropParam : '');
+        const url = '/api/filter/targets?category_ids=' + catIDs.join(',') + (cropParam ? '&crop_ids=' + cropParam : '');
 
         try {
             const targets = await get(url);
             container.innerHTML = '';
-
             if (!targets.length) {
                 container.innerHTML = '<span class="text-xs text-gray-400">该条件暂无防治对象数据</span>';
                 renderResult();
                 return;
             }
 
-            // 按类型分组：weed / pest / disease
-            const groups = { weed: [], pest: [], disease: [] };
+            // 需求4：根据已选一级分类的类型过滤防治对象
+            const allowedTypes = getTargetTypesFromSelectedL1();
+            const filtered = allowedTypes.size > 0
+                ? targets.filter(t => allowedTypes.has(t.type))
+                : targets;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-400">当前分类下无对应类型的防治对象</span>';
+                renderResult();
+                return;
+            }
+
+            // 按类型分组
+            const groups = {};
             const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
-            targets.forEach(t => {
-                if (groups[t.type]) groups[t.type].push(t);
+            filtered.forEach(t => {
+                if (!groups[t.type]) groups[t.type] = [];
+                groups[t.type].push(t);
             });
 
-            // 删除不在新列表中的已选目标（动态过滤，防止选了当前无效的目标）
-            const validIDs = new Set(targets.map(t => t.id));
+            // 清理无效的已选项
+            const validIDs = new Set(filtered.map(t => t.id));
             state.selectedTargetIDs.forEach(id => {
                 if (!validIDs.has(id)) state.selectedTargetIDs.delete(id);
             });
 
-            ['weed', 'pest', 'disease'].forEach(type => {
-                if (!groups[type].length) return;
+            Object.entries(groups).forEach(([type, items]) => {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'mb-3';
                 const label = document.createElement('div');
                 label.className = 'text-xs text-gray-500 mb-1.5 font-medium';
-                label.textContent = '▪ ' + typeLabel[type];
+                label.textContent = '▪ ' + (typeLabel[type] || type);
                 groupDiv.appendChild(label);
                 const btnWrap = document.createElement('div');
                 btnWrap.className = 'flex flex-wrap gap-1.5';
-                renderTagGroup(btnWrap, groups[type], state.selectedTargetIDs, (id, selected) => {
+                renderTagGroup(btnWrap, items, state.selectedTargetIDs, (id, selected) => {
                     if (selected) state.selectedTargetIDs.add(id);
                     else state.selectedTargetIDs.delete(id);
                     state.page = 1;
                     renderResult();
+                    updateFilterCard();
                     updateBreadcrumb();
-                    updateSidebar();
                 });
                 groupDiv.appendChild(btnWrap);
                 container.appendChild(groupDiv);
@@ -381,23 +480,21 @@
 
         renderResult();
         updateBreadcrumb();
-        updateSidebar();
+        updateFilterCard();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 产品列表渲染
+    // 产品列表
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** renderResult 根据当前 state 查询产品并渲染到结果区 */
     async function renderResult() {
         updateBreadcrumb();
-        updateSidebar();
+        updateFilterCard();
 
-        const catID = state.selectedCatL2?.id || state.selectedCatL1?.id || 0;
+        const catIDs = getEffectiveCategoryIDs();
         const keyword = state.keyword.trim();
 
-        // 没有任何筛选条件时不查询
-        if (!catID && !keyword && !state.selectedCropIDs.size && !state.selectedTargetIDs.size) {
+        if (catIDs.length === 0 && !keyword && !state.selectedCropIDs.size && !state.selectedTargetIDs.size) {
             document.getElementById('resultBody').innerHTML = '<div class="text-center py-16 text-gray-400 text-sm">请选择品类后查询</div>';
             document.getElementById('resultCount').textContent = '请从上方选择筛选条件';
             document.getElementById('pagination').innerHTML = '';
@@ -409,7 +506,7 @@
             page: state.page,
             page_size: state.pageSize,
         });
-        if (catID) params.set('category_id', catID);
+        if (catIDs.length) params.set('category_ids', catIDs.join(','));
         if (keyword) params.set('keyword', keyword);
         if (state.selectedCropIDs.size) params.set('crop_ids', [...state.selectedCropIDs].join(','));
         if (state.selectedTargetIDs.size) params.set('target_ids', [...state.selectedTargetIDs].join(','));
@@ -424,11 +521,10 @@
             renderProductTable(data.list);
             renderPagination();
         } catch(e) {
-            // 错误已在get函数中处理，这里不再重复处理
+            document.getElementById('resultBody').innerHTML = '<div class="text-center py-8 text-red-400 text-sm">查询失败：' + e.message + '</div>';
         }
     }
 
-    /** renderProductTable 将产品列表渲染成表格 */
     function renderProductTable(list) {
         if (!list.length) {
             document.getElementById('resultBody').innerHTML = '<div class="text-center py-16 text-gray-400 text-sm">当前条件下没有匹配的产品</div>';
@@ -471,23 +567,19 @@
     </table>`;
     }
 
-    /** renderPagination 渲染分页控件 */
     function renderPagination() {
         const totalPages = Math.ceil(state.total / state.pageSize);
-        if (totalPages <= 1) {
-            document.getElementById('pagination').innerHTML = '';
-            return;
-        }
+        const el = document.getElementById('pagination');
+        if (totalPages <= 1) { el.innerHTML = ''; return; }
 
-        let html = '';
         const p = state.page;
+        let html = '';
         if (p > 1) html += `<button onclick="goPage(${p-1})" class="text-xs px-2 py-1 border rounded hover:bg-gray-50">‹ 上一页</button>`;
         html += `<span class="text-xs text-gray-500">${p} / ${totalPages}</span>`;
         if (p < totalPages) html += `<button onclick="goPage(${p+1})" class="text-xs px-2 py-1 border rounded hover:bg-gray-50">下一页 ›</button>`;
-        document.getElementById('pagination').innerHTML = html;
+        el.innerHTML = html;
     }
 
-    /** goPage 跳转到指定页码 */
     function goPage(page) {
         state.page = page;
         renderResult();
@@ -498,7 +590,6 @@
     // 产品详情弹层
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** showDetail 加载并展示产品详情弹层 */
     async function showDetail(id) {
         document.getElementById('modalContent').innerHTML = '<div class="text-center py-8 text-gray-400">加载中...</div>';
         document.getElementById('modalOverlay').classList.remove('hidden');
@@ -546,20 +637,24 @@
         }
     }
 
-    /** closeModal 关闭详情弹层 */
     function closeModal() {
         document.getElementById('modalOverlay').classList.add('hidden');
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 面包屑 & 侧边栏更新
+    // 面包屑
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** updateBreadcrumb 更新顶部面包屑：当前选择路径 */
     function updateBreadcrumb() {
         const parts = [];
-        if (state.selectedCatL1) parts.push(state.selectedCatL1.name);
-        if (state.selectedCatL2) parts.push(state.selectedCatL2.name);
+        state.selectedCatL1IDs.forEach(id => {
+            const cat = state.categoryTree.find(c => c.id === id);
+            if (cat) parts.push(cat.name);
+        });
+        state.selectedCatL2IDs.forEach(id => {
+            const cat = state.categoryTree.flatMap(c => c.children || []).find(c => c.id === id);
+            if (cat) parts.push(cat.name);
+        });
 
         const el = document.getElementById('breadcrumb');
         if (!parts.length) { el.innerHTML = ''; return; }
@@ -568,76 +663,107 @@
         ).join('');
     }
 
-    /** updateSidebar 更新右侧摘要：显示当前已选作物和防治对象数量 */
-    function updateSidebar() {
-        const el = document.getElementById('sidebarSummary');
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 当前筛选卡片（需求5：顶部展示）
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function updateFilterCard() {
+        const card = document.getElementById('filterCard');
+        const chips = document.getElementById('filterChips');
         const clearBtn = document.getElementById('clearBtn');
-        const hasFilter = state.selectedCropIDs.size || state.selectedTargetIDs.size;
+
+        const hasFilter = state.selectedCatL1IDs.size > 0 || state.selectedCatL2IDs.size > 0
+            || state.selectedCropIDs.size > 0 || state.selectedTargetIDs.size > 0;
 
         if (!hasFilter) {
-            el.innerHTML = '<span class="text-gray-400">未选择过滤条件</span>';
-            clearBtn.classList.add('hidden');
+            card.classList.add('hidden');
             return;
         }
 
+        card.classList.remove('hidden');
+        chips.innerHTML = '';
+
+        // 一级分类
+        state.selectedCatL1IDs.forEach(id => {
+            const cat = state.categoryTree.find(c => c.id === id);
+            if (!cat) return;
+            const chip = document.createElement('span');
+            chip.className = 'filter-chip';
+            chip.innerHTML = `${esc(cat.name)} <span class="remove" data-action="removeL1" data-id="${id}">×</span>`;
+            chips.appendChild(chip);
+        });
+
+        // 二级分类
+        state.selectedCatL2IDs.forEach(id => {
+            const cat = state.categoryTree.flatMap(c => c.children || []).find(c => c.id === id);
+            if (!cat) return;
+            const chip = document.createElement('span');
+            chip.className = 'filter-chip';
+            chip.innerHTML = `${esc(cat.name)} <span class="remove" data-action="removeL2" data-id="${id}">×</span>`;
+            chips.appendChild(chip);
+        });
+
+        // 作物（显示数量）
+        if (state.selectedCropIDs.size > 0) {
+            const chip = document.createElement('span');
+            chip.className = 'filter-chip';
+            chip.textContent = `作物 ${state.selectedCropIDs.size} 项`;
+            chips.appendChild(chip);
+        }
+
+        // 防治对象（显示数量）
+        if (state.selectedTargetIDs.size > 0) {
+            const chip = document.createElement('span');
+            chip.className = 'filter-chip';
+            chip.textContent = `防治对象 ${state.selectedTargetIDs.size} 项`;
+            chips.appendChild(chip);
+        }
+
         clearBtn.classList.remove('hidden');
-        let html = '';
-        if (state.selectedCropIDs.size) html += `<div class="mb-1.5"><span class="text-gray-500">作物：</span><span class="text-green-700">${state.selectedCropIDs.size} 项</span></div>`;
-        if (state.selectedTargetIDs.size) html += `<div><span class="text-gray-500">防治对象：</span><span class="text-green-700">${state.selectedTargetIDs.size} 项</span></div>`;
-        el.innerHTML = html;
-    }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 工具函数
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /**
-     * makeTagBtn 创建一个单选标签按钮元素。
-     * @param {string} text 按钮显示文本
-     * @param {boolean} selected 是否选中
-     * @param {Function} onClick 点击回调
-     */
-    function makeTagBtn(text, selected, onClick) {
-        const btn = document.createElement('button');
-        btn.className = 'tag-btn' + (selected ? ' selected' : '');
-        btn.textContent = (selected ? '✓ ' : '') + text;
-        btn.addEventListener('click', onClick);
-        return btn;
-    }
-
-    /**
-     * renderTagGroup 批量渲染多选标签按钮到容器中。
-     * @param {HTMLElement} container 父容器
-     * @param {Array} items {id, name} 列表
-     * @param {Set} selectedSet 已选 id 的 Set
-     * @param {Function} onChange (id, selected) => void 选中状态变化回调
-     */
-    function renderTagGroup(container, items, selectedSet, onChange) {
-        items.forEach(item => {
-            const btn = document.createElement('button');
-            const selected = selectedSet.has(item.id);
-            btn.className = 'tag-btn' + (selected ? ' selected' : '');
-            btn.textContent = (selected ? '✓ ' : '') + item.name;
-            btn.addEventListener('click', () => {
-                const nowSelected = !selectedSet.has(item.id);
-                // 重新渲染整组（保持按钮状态同步）
-                onChange(item.id, nowSelected);
-                // 更新当前按钮显示
-                btn.className = 'tag-btn' + (nowSelected ? ' selected' : '');
-                btn.textContent = (nowSelected ? '✓ ' : '') + item.name;
+        // 点击×移除单个条件
+        chips.querySelectorAll('.remove').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = el.dataset.action;
+                const id = parseInt(el.dataset.id);
+                if (action === 'removeL1') {
+                    state.selectedCatL1IDs.delete(id);
+                    const l1 = state.categoryTree.find(c => c.id === id);
+                    if (l1 && l1.children) {
+                        l1.children.forEach(child => state.selectedCatL2IDs.delete(child.id));
+                    }
+                } else if (action === 'removeL2') {
+                    state.selectedCatL2IDs.delete(id);
+                }
+                state.selectedCropIDs.clear();
+                state.selectedTargetIDs.clear();
+                state.page = 1;
+                renderStep1();
+                renderStep2();
+                updateFilterCard();
+                updateBreadcrumb();
             });
-            container.appendChild(btn);
         });
     }
 
-    /** esc HTML 转义，防止 XSS */
-    function esc(str) {
-        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+    // 清空全部
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        state.selectedCatL1IDs.clear();
+        state.selectedCatL2IDs.clear();
+        state.selectedCropIDs.clear();
+        state.selectedTargetIDs.clear();
+        state.page = 1;
+        renderStep1();
+        renderStep2();
+        updateFilterCard();
+        updateBreadcrumb();
+    });
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // 搜索框处理（防抖）
+    // 搜索框
     // ═══════════════════════════════════════════════════════════════════════════
+
     let searchTimer = null;
     document.getElementById('searchInput').addEventListener('input', e => {
         clearTimeout(searchTimer);
@@ -648,16 +774,7 @@
         }, 350);
     });
 
-    // 清空按钮
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        state.selectedCropIDs.clear();
-        state.selectedTargetIDs.clear();
-        state.page = 1;
-        // 重新渲染步骤三和四
-        loadAndRenderStep3();
-    });
-
-    // 点击遮罩关闭弹层
+    // 弹层遮罩
     document.getElementById('modalOverlay').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeModal();
     });
@@ -667,6 +784,3 @@
 </script>
 </body>
 </html>
-
-
-

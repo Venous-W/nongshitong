@@ -10,18 +10,18 @@ import (
 // ProductFilter 是查询产品列表时支持的筛选条件。
 // 各字段均为可选：零值/空值表示不过滤该条件。
 type ProductFilter struct {
-	CategoryID int64   // 按分类过滤（含子分类）
-	CropIDs    []int64 // 按作物过滤（OR 逻辑，产品包含任一作物即匹配）
-	TargetIDs  []int64 // 按防治对象过滤（OR 逻辑）
-	Keyword    string  // 按产品名称关键词模糊搜索
-	IsActive   int     // 1=仅上架 / 0=仅下架 / -1=全部（查询页传1，管理台传-1）
-	Page       int     // 当前页码，从 1 开始
-	PageSize   int     // 每页条数，默认 30
+	CategoryIDs []int64 // 按分类过滤（含子分类）
+	CropIDs     []int64 // 按作物过滤（OR 逻辑，产品包含任一作物即匹配）
+	TargetIDs   []int64 // 按防治对象过滤（OR 逻辑）
+	Keyword     string  // 按产品名称关键词模糊搜索
+	IsActive    int     // 1=仅上架 / 0=仅下架 / -1=全部（查询页传1，管理台传-1）
+	Page        int     // 当前页码，从 1 开始
+	PageSize    int     // 每页条数，默认 30
 }
 
 // ProductListResult 是分页查询结果，包含列表数据和总条数。
 type ProductListResult struct {
-	Total int                    `json:"total"`
+	Total int                     `json:"total"`
 	List  []model.ProductListItem `json:"list"`
 }
 
@@ -39,11 +39,17 @@ func ListProducts(f ProductFilter) (*ProductListResult, error) {
 	var conds []string
 	var args []interface{}
 
-	// 分类过滤：匹配该分类本身或其直接子分类
-	if f.CategoryID > 0 {
-		conds = append(conds,
-			`(p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`)
-		args = append(args, f.CategoryID, f.CategoryID)
+	// 分类过滤：匹配这些分类本身或其直接子分类
+	if len(f.CategoryIDs) > 0 {
+		var catConds []string
+		for _, cid := range f.CategoryIDs {
+			catConds = append(catConds,
+				`(p.category_id = ? OR p.category_id IN (SELECT id FROM categories WHERE parent_id = ?))`)
+			args = append(args, cid, cid)
+		}
+		// 用 OR 连接多个分类条件
+		combined := strings.Join(catConds, " OR ")
+		conds = append(conds, `(`+combined+`)`)
 	}
 
 	// 是否上架过滤

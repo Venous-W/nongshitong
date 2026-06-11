@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"nongshaitong/internal/model"
@@ -10,12 +10,19 @@ import (
 // ListProducts 鍒嗛〉鏌ヨ浜у搧鍒楄〃锛屾敮鎸佸鏉′欢绛涢€夈€?// GET /api/products?category_id=1&crop_ids=2,3&target_ids=4&keyword=鑽夌敇鑶?is_active=1&page=1&page_size=30
 func ListProducts(c *gin.Context) {
 	filter := repository.ProductFilter{
-		CategoryID: parseQueryInt64(c, "category_id", 0),
-		CropIDs:    parseQueryInt64List(c, "crop_ids"),
-		TargetIDs:  parseQueryInt64List(c, "target_ids"),
-		Keyword:    c.Query("keyword"),
-		Page:       int(parseQueryInt64(c, "page", 1)),
-		PageSize:   int(parseQueryInt64(c, "page_size", 30)),
+		CategoryIDs: parseQueryInt64List(c, "category_ids"),
+		CropIDs:     parseQueryInt64List(c, "crop_ids"),
+		TargetIDs:   parseQueryInt64List(c, "target_ids"),
+		Keyword:     c.Query("keyword"),
+		Page:        int(parseQueryInt64(c, "page", 1)),
+		PageSize:    int(parseQueryInt64(c, "page_size", 30)),
+	}
+
+	// 向后兼容：如果 category_ids 为空，尝试单个 category_id（管理台使用）
+	if len(filter.CategoryIDs) == 0 {
+		if cid := parseQueryInt64(c, "category_id", 0); cid > 0 {
+			filter.CategoryIDs = []int64{cid}
+		}
 	}
 
 	// is_active: 1=浠呬笂鏋?/ 0=浠呬笅鏋?/ 绌?鍏ㄩ儴(-1)
