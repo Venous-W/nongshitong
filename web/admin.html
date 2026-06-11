@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>农药知识库 · 管理后台</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { --green: #2E7D32; --green-light: #E8F5E9; --border: #E0E0E0; }
+  body { background: #F4F6F4; font-family: "PingFang SC","Microsoft YaHei",sans-serif; }
+
+  /* Tab 样式 */
+  .tab-btn { padding: 10px 20px; font-size: 14px; border-bottom: 2px solid transparent; color: #666; cursor: pointer; }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+
+  /* 通用表格 */
+  .admin-table th { background: #F0F4F0; font-size: 13px; font-weight: 600; color: #333; }
+  .admin-table td { font-size: 13px; vertical-align: middle; }
+  .admin-table tr:hover td { background: #F9FBF9; }
+
+  /* 标签（产品详情中的作物/防治对象） */
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; background: #E8F5E9; color: #2E7D32; margin: 2px; border: 1px solid #C8E6C9; }
+  .chip.pest { background: #FFF8E1; color: #F57F17; border-color: #FFE082; }
+  .chip.disease { background: #FCE4EC; color: #C62828; border-color: #F48FB1; }
+
+  /* 按钮 */
+  .btn-primary { background: var(--green); color: #fff; padding: 7px 16px; border-radius: 5px; font-size: 13px; cursor: pointer; border: none; }
+  .btn-primary:hover { background: #1B5E20; }
+  .btn-ghost { padding: 5px 12px; border-radius: 4px; font-size: 12px; border: 1px solid var(--border); color: #555; cursor: pointer; background: #fff; }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+  .btn-danger { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #FFCDD2; color: #C62828; cursor: pointer; background: #fff; }
+  .btn-danger:hover { background: #FFEBEE; }
+
+  /* 弹层 */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 50; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: #fff; border-radius: 8px; width: 720px; max-height: 85vh; overflow-y: auto; padding: 28px; position: relative; }
+
+  /* 表单 */
+  .form-label { font-size: 13px; color: #555; margin-bottom: 5px; display: block; }
+  .form-input { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; outline: none; }
+  .form-input:focus { border-color: var(--green); box-shadow: 0 0 0 2px #C8E6C9; }
+  .form-select { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; background: #fff; outline: none; }
+  .form-textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; resize: vertical; min-height: 72px; outline: none; }
+  .form-textarea:focus, .form-select:focus { border-color: var(--green); box-shadow: 0 0 0 2px #C8E6C9; }
+
+  /* 多选标签（产品表单中选作物/防治对象） */
+  .select-tag { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border-radius: 3px; cursor: pointer; user-select: none;
+    font-size: 12px; border: 1px solid #DDD; background: #F5F5F5; color: #555; margin: 3px; }
+  .select-tag.on { background: #E8F5E9; color: var(--green); border-color: var(--green); }
+  .select-tag.on-pest { background: #FFF8E1; color: #E65100; border-color: #FFB300; }
+  .select-tag.on-disease { background: #FCE4EC; color: #C62828; border-color: #F06292; }
+
+  /* 状态徽章 */
+  .badge-on { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #E8F5E9; color: #2E7D32; }
+  .badge-off { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #EEEEEE; color: #9E9E9E; }
+
+  /* 类型徽章 */
+  .type-weed { background: #E8F5E9; color: #2E7D32; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
+  .type-pest { background: #FFF8E1; color: #E65100; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
+  .type-disease { background: #FCE4EC; color: #C62828; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
+
+  /* Toast 提示 */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px;
+    border-radius: 6px; font-size: 13px; color: #fff; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  #toast.success { background: #2E7D32; }
+  #toast.error { background: #C62828; }
+</style>
+</head>
+<body>
+
+<!-- ── 顶部导航 ─────────────────────────────────────────────────────────── -->
+<header class="bg-white border-b border-gray-200 h-14 flex items-center px-6 sticky top-0 z-40 shadow-sm">
+  <span class="text-green-800 font-bold text-lg">🌿 农药知识库</span>
+  <span class="ml-3 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">管理后台</span>
+  <div class="flex-1"></div>
+  <a href="/" class="text-sm text-gray-500 hover:text-green-700">← 返回查询页</a>
+</header>
+
+<!-- ── Tab 栏 ─────────────────────────────────────────────────────────────── -->
+<div class="bg-white border-b border-gray-200 px-6 flex">
+  <button class="tab-btn active" onclick="switchTab('products')">产品管理</button>
+  <button class="tab-btn" onclick="switchTab('categories')">分类管理</button>
+  <button class="tab-btn" onclick="switchTab('crops')">作物管理</button>
+  <button class="tab-btn" onclick="switchTab('targets')">防治对象</button>
+</div>
+
+<!-- ── 主内容区 ───────────────────────────────────────────────────────────── -->
+<div class="max-w-screen-xl mx-auto px-6 py-5">
+
+  <!-- 产品管理 Tab -->
+  <div id="tab-products">
+    <!-- 工具栏 -->
+    <div class="flex items-center gap-3 mb-4">
+      <button class="btn-primary" onclick="openProductModal()">+ 新增产品</button>
+      <input id="productSearch" type="text" placeholder="搜索产品名称..." class="form-input" style="width:220px;padding:7px 10px">
+      <select id="productCatFilter" class="form-select" style="width:180px">
+        <option value="">全部分类</option>
+      </select>
+      <select id="productActiveFilter" class="form-select" style="width:120px">
+        <option value="-1">全部状态</option>
+        <option value="1">上架</option>
+        <option value="0">下架</option>
+      </select>
+    </div>
+
+    <!-- 产品表格 -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div id="productTableHeader" class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <span id="productCount" class="text-sm text-gray-500">加载中...</span>
+        <div id="productPagination" class="flex items-center gap-2"></div>
+      </div>
+      <div id="productTableBody"></div>
+    </div>
+  </div>
+
+  <!-- 分类管理 Tab -->
+  <div id="tab-categories" class="hidden">
+    <div class="flex items-center gap-3 mb-4">
+      <button class="btn-primary" onclick="openCategoryModal()">+ 新增分类</button>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div id="categoryTableBody"></div>
+    </div>
+  </div>
+
+  <!-- 作物管理 Tab -->
+  <div id="tab-crops" class="hidden">
+    <div class="flex items-center gap-3 mb-4">
+      <button class="btn-primary" onclick="openCropModal()">+ 新增作物/场所</button>
+      <input id="cropSearch" type="text" placeholder="搜索..." class="form-input" style="width:200px;padding:7px 10px">
+    </div>
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div id="cropTableBody"></div>
+    </div>
+  </div>
+
+  <!-- 防治对象管理 Tab -->
+  <div id="tab-targets" class="hidden">
+    <div class="flex items-center gap-3 mb-4">
+      <button class="btn-primary" onclick="openTargetModal()">+ 新增防治对象</button>
+      <select id="targetTypeFilter" class="form-select" style="width:140px">
+        <option value="">全部类型</option>
+        <option value="weed">杂草</option>
+        <option value="pest">害虫</option>
+        <option value="disease">病害</option>
+      </select>
+      <input id="targetSearch" type="text" placeholder="搜索..." class="form-input" style="width:200px;padding:7px 10px">
+    </div>
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div id="targetTableBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ 弹层区域 ════════════════════════════════════════════════════════════ -->
+
+<!-- 产品新增/编辑弹层 -->
+<div id="productModal" class="modal-overlay hidden">
+<div class="modal-box">
+  <button onclick="closeModal('productModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl">✕</button>
+  <h3 id="productModalTitle" class="text-base font-bold text-gray-800 mb-5">新增产品</h3>
+
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="form-label">一级分类 *</label>
+      <select id="pCatL1" class="form-select" onchange="onCatL1Change()">
+        <option value="">请选择</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">二级分类</label>
+      <select id="pCatL2" class="form-select">
+        <option value="">无（直接挂一级）</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">产品名称 *（格式：含量+成分+剂型，如"33%草甘膦 水剂"）</label>
+    <input id="pName" type="text" class="form-input" placeholder="如：33%草甘膦 水剂">
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">用量</label>
+    <input id="pDosage" type="text" class="form-input" placeholder="如：200ml/桶水">
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">使用方式 / 施药时机</label>
+    <textarea id="pUsage" class="form-textarea" placeholder="施药时机、使用方法说明..."></textarea>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">重点及注意事项</label>
+    <textarea id="pNotes" class="form-textarea" placeholder="注意事项、特殊说明..."></textarea>
+  </div>
+
+  <!-- 选作物（多选） -->
+  <div class="mb-4">
+    <label class="form-label">适用作物 / 场所 <span class="text-gray-400 font-normal">（可多选）</span></label>
+    <div id="pCropSelector" class="border border-gray-200 rounded p-3 max-h-36 overflow-y-auto bg-gray-50">
+      <span class="text-xs text-gray-400">加载中...</span>
+    </div>
+  </div>
+
+  <!-- 选防治对象（多选，按类型分组） -->
+  <div class="mb-4">
+    <label class="form-label">防治对象 <span class="text-gray-400 font-normal">（可多选）</span></label>
+    <div id="pTargetSelector" class="border border-gray-200 rounded p-3 max-h-52 overflow-y-auto bg-gray-50">
+      <span class="text-xs text-gray-400">加载中...</span>
+    </div>
+  </div>
+
+  <div class="mb-5">
+    <label class="form-label">上架状态</label>
+    <div class="flex gap-4 text-sm">
+      <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="pActive" value="1" checked> 上架（查询页可见）</label>
+      <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="pActive" value="0"> 下架</label>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <button onclick="closeModal('productModal')" class="btn-ghost">取消</button>
+    <button onclick="submitProduct()" class="btn-primary">保存产品</button>
+  </div>
+</div>
+</div>
+
+<!-- 分类新增/编辑弹层 -->
+<div id="categoryModal" class="modal-overlay hidden">
+<div class="modal-box" style="width:440px">
+  <button onclick="closeModal('categoryModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl">✕</button>
+  <h3 id="categoryModalTitle" class="text-base font-bold text-gray-800 mb-5">新增分类</h3>
+  <div class="mb-4">
+    <label class="form-label">父级分类</label>
+    <select id="cParent" class="form-select">
+      <option value="0">无（顶级分类）</option>
+    </select>
+  </div>
+  <div class="mb-5">
+    <label class="form-label">分类名称 *</label>
+    <input id="cName" type="text" class="form-input" placeholder="如：除草、苗前除草剂">
+  </div>
+  <div class="flex justify-end gap-3">
+    <button onclick="closeModal('categoryModal')" class="btn-ghost">取消</button>
+    <button onclick="submitCategory()" class="btn-primary">保存</button>
+  </div>
+</div>
+</div>
+
+<!-- 作物新增/编辑弹层 -->
+<div id="cropModal" class="modal-overlay hidden">
+<div class="modal-box" style="width:400px">
+  <button onclick="closeModal('cropModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl">✕</button>
+  <h3 id="cropModalTitle" class="text-base font-bold text-gray-800 mb-5">新增作物/场所</h3>
+  <div class="mb-5">
+    <label class="form-label">名称 *</label>
+    <input id="crName" type="text" class="form-input" placeholder="如：大豆、果园">
+  </div>
+  <div class="flex justify-end gap-3">
+    <button onclick="closeModal('cropModal')" class="btn-ghost">取消</button>
+    <button onclick="submitCrop()" class="btn-primary">保存</button>
+  </div>
+</div>
+</div>
+
+<!-- 防治对象新增/编辑弹层 -->
+<div id="targetModal" class="modal-overlay hidden">
+<div class="modal-box" style="width:400px">
+  <button onclick="closeModal('targetModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl">✕</button>
+  <h3 id="targetModalTitle" class="text-base font-bold text-gray-800 mb-5">新增防治对象</h3>
+  <div class="mb-4">
+    <label class="form-label">类型 *</label>
+    <select id="tType" class="form-select">
+      <option value="weed">杂草 (weed)</option>
+      <option value="pest">害虫 (pest)</option>
+      <option value="disease">病害 (disease)</option>
+    </select>
+  </div>
+  <div class="mb-5">
+    <label class="form-label">名称 *</label>
+    <input id="tName" type="text" class="form-input" placeholder="如：稗草、蚜虫、白粉病">
+  </div>
+  <div class="flex justify-end gap-3">
+    <button onclick="closeModal('targetModal')" class="btn-ghost">取消</button>
+    <button onclick="submitTarget()" class="btn-primary">保存</button>
+  </div>
+</div>
+</div>
+
+<!-- Toast 提示 -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// 全局缓存
+// ═══════════════════════════════════════════════════════════════════════════
+let allCategories = [];   // 平铺分类列表（含所有层级）
+let categoryTree = [];    // 分类树
+let allCrops = [];        // 所有作物
+let allTargets = [];      // 所有防治对象
+
+// 编辑时记录当前操作的 id
+let editingProductID = null;
+let editingCategoryID = null;
+let editingCropID = null;
+let editingTargetID = null;
+
+// 产品列表分页状态
+const productState = { page: 1, pageSize: 30, total: 0 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API 工具
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** api 发送 JSON 请求，返回 data 字段；失败时 throw 错误消息 */
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const json = await res.json();
+  if (json.code !== 0) throw new Error(json.msg || '请求失败');
+  return json.data;
+}
+
+/** get / post / put / del 语义化 HTTP 方法简写 */
+const get  = (url)        => api('GET',    url);
+const post = (url, body)  => api('POST',   url, body);
+const put  = (url, body)  => api('PUT',    url, body);
+const del  = (url)        => api('DELETE', url);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Toast 提示
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** showToast 显示底部浮动提示条，type: 'success' | 'error' */
+function showToast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => el.className = '', 2800);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tab 切换
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** switchTab 切换 Tab，隐藏其他面板，加载对应数据 */
+function switchTab(name) {
+  ['products','categories','crops','targets'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+    document.querySelector(`[onclick="switchTab('${t}')"]`).classList.toggle('active', t === name);
+  });
+  if (name === 'products') loadProducts();
+  if (name === 'categories') loadCategories();
+  if (name === 'crops') loadCropsTab();
+  if (name === 'targets') loadTargetsTab();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 产品管理
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** loadProducts 加载产品列表（含筛选和分页） */
+async function loadProducts() {
+  const keyword   = document.getElementById('productSearch').value.trim();
+  const catID     = document.getElementById('productCatFilter').value;
+  const isActive  = document.getElementById('productActiveFilter').value;
+
+  const params = new URLSearchParams({
+    page: productState.page,
+    page_size: productState.pageSize,
+  });
+  if (keyword)  params.set('keyword', keyword);
+  if (catID)    params.set('category_id', catID);
+  if (isActive !== '-1') params.set('is_active', isActive);
+
+  document.getElementById('productCount').textContent = '加载中...';
+  try {
+    const data = await get('/api/products?' + params);
+    productState.total = data.total;
+    document.getElementById('productCount').textContent = `共 ${data.total} 个产品`;
+    renderProductTable(data.list);
+    renderProductPagination();
+  } catch(e) {
+    showToast('加载产品失败：' + e.message, 'error');
+  }
+}
+
+/** renderProductTable 将产品列表渲染为表格 */
+function renderProductTable(list) {
+  if (!list.length) {
+    document.getElementById('productTableBody').innerHTML =
+      '<div class="text-center py-12 text-gray-400 text-sm">暂无产品数据</div>';
+    return;
+  }
+
+  const rows = list.map(p => {
+    const status = p.is_active === 1
+      ? `<span class="badge-on">上架</span>`
+      : `<span class="badge-off">下架</span>`;
+    const toggleBtn = p.is_active === 1
+      ? `<button onclick="toggleActive(${p.id},0)" class="btn-ghost">下架</button>`
+      : `<button onclick="toggleActive(${p.id},1)" class="btn-ghost" style="color:var(--green)">上架</button>`;
+    const cropHtml = (p.crops||[]).slice(0,6).map(c => `<span class="chip">${esc(c.name)}</span>`).join('')
+      + (p.crops.length > 6 ? `<span class="chip" style="background:#eee;color:#999">+${p.crops.length-6}</span>` : '');
+    const tgtHtml = (p.targets||[]).slice(0,4).map(t => {
+      const cls = t.type === 'pest' ? 'pest' : t.type === 'disease' ? 'disease' : '';
+      return `<span class="chip ${cls}">${esc(t.name)}</span>`;
+    }).join('') + (p.targets.length > 4 ? `<span class="chip" style="background:#eee;color:#999">+${p.targets.length-4}</span>` : '');
+
+    return `<tr class="border-b border-gray-100">
+      <td class="px-4 py-3">
+        <div class="font-medium text-gray-800">${esc(p.name)}</div>
+        <div class="text-xs text-gray-400 mt-0.5">${esc(p.category_name)}</div>
+      </td>
+      <td class="px-3 py-3 text-gray-600 whitespace-nowrap">${esc(p.dosage)||'—'}</td>
+      <td class="px-3 py-3 max-w-xs">${cropHtml||'<span class="text-gray-300 text-xs">—</span>'}</td>
+      <td class="px-3 py-3 max-w-xs">${tgtHtml||'<span class="text-gray-300 text-xs">—</span>'}</td>
+      <td class="px-3 py-3">${status}</td>
+      <td class="px-3 py-3 whitespace-nowrap">
+        <div class="flex items-center gap-1.5">
+          <button onclick="openProductModal(${p.id})" class="btn-ghost">编辑</button>
+          ${toggleBtn}
+          <button onclick="deleteProduct(${p.id},'${esc(p.name)}')" class="btn-danger">删除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('productTableBody').innerHTML = `
+    <table class="admin-table w-full border-collapse">
+      <thead>
+        <tr class="border-b border-gray-200 text-left">
+          <th class="px-4 py-2.5">产品名称</th>
+          <th class="px-3 py-2.5">用量</th>
+          <th class="px-3 py-2.5">适用作物/场所</th>
+          <th class="px-3 py-2.5">防治对象</th>
+          <th class="px-3 py-2.5">状态</th>
+          <th class="px-3 py-2.5">操作</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/** renderProductPagination 渲染产品列表分页控件 */
+function renderProductPagination() {
+  const totalPages = Math.ceil(productState.total / productState.pageSize);
+  const el = document.getElementById('productPagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const p = productState.page;
+  let html = '';
+  if (p > 1) html += `<button onclick="goProductPage(${p-1})" class="btn-ghost">‹</button>`;
+  html += `<span class="text-xs text-gray-500">${p} / ${totalPages}</span>`;
+  if (p < totalPages) html += `<button onclick="goProductPage(${p+1})" class="btn-ghost">›</button>`;
+  el.innerHTML = html;
+}
+
+/** goProductPage 跳转产品列表页码 */
+function goProductPage(page) {
+  productState.page = page;
+  loadProducts();
+}
+
+/** openProductModal 打开产品新增/编辑弹层。id 为 null 时表示新增 */
+async function openProductModal(id) {
+  editingProductID = id || null;
+  document.getElementById('productModalTitle').textContent = id ? '编辑产品' : '新增产品';
+
+  // 清空表单
+  ['pName','pDosage','pUsage','pNotes'].forEach(k => document.getElementById(k).value = '');
+  document.querySelector('[name="pActive"][value="1"]').checked = true;
+  document.getElementById('pCatL1').value = '';
+  document.getElementById('pCatL2').innerHTML = '<option value="">无（直接挂一级）</option>';
+
+  // 加载分类、作物、防治对象
+  await Promise.all([loadCategoryOptions(), loadCropSelector([]), loadTargetSelector([])]);
+
+  // 编辑模式：加载产品数据填充表单
+  if (id) {
+    try {
+      const p = await get('/api/products/' + id);
+      document.getElementById('pName').value    = p.name;
+      document.getElementById('pDosage').value  = p.dosage;
+      document.getElementById('pUsage').value   = p.usage;
+      document.getElementById('pNotes').value   = p.notes;
+      document.querySelector(`[name="pActive"][value="${p.is_active}"]`).checked = true;
+
+      // 回填分类
+      const cat = allCategories.find(c => c.id === p.category_id);
+      if (cat) {
+        if (cat.parent_id === 0) {
+          document.getElementById('pCatL1').value = cat.id;
+          onCatL1Change();
+        } else {
+          const parent = allCategories.find(c => c.id === cat.parent_id);
+          if (parent) {
+            document.getElementById('pCatL1').value = parent.id;
+            onCatL1Change();
+            setTimeout(() => document.getElementById('pCatL2').value = cat.id, 0);
+          }
+        }
+      }
+
+      // 回填已选作物和防治对象
+      const selectedCropIDs = new Set((p.crops||[]).map(c => c.id));
+      const selectedTargetIDs = new Set((p.targets||[]).map(t => t.id));
+      await loadCropSelector([...selectedCropIDs]);
+      await loadTargetSelector([...selectedTargetIDs]);
+    } catch(e) {
+      showToast('加载产品数据失败：' + e.message, 'error');
+    }
+  }
+
+  document.getElementById('productModal').classList.remove('hidden');
+}
+
+/** loadCategoryOptions 加载分类下拉选项（产品表单用） */
+async function loadCategoryOptions() {
+  if (!allCategories.length) {
+    allCategories = await get('/api/categories/flat');
+    categoryTree  = await get('/api/categories');
+    // 更新产品列表的分类筛选下拉
+    const filter = document.getElementById('productCatFilter');
+    filter.innerHTML = '<option value="">全部分类</option>';
+    allCategories.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = (c.parent_id === 0 ? '' : '  ↳ ') + c.name;
+      filter.appendChild(opt);
+    });
+    // 更新分类管理弹层父级下拉
+    const cParent = document.getElementById('cParent');
+    cParent.innerHTML = '<option value="0">无（顶级分类）</option>';
+    allCategories.filter(c => c.parent_id === 0).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      cParent.appendChild(opt);
+    });
+  }
+
+  // 填充产品表单一级分类
+  const l1 = document.getElementById('pCatL1');
+  l1.innerHTML = '<option value="">请选择一级分类</option>';
+  allCategories.filter(c => c.parent_id === 0).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    l1.appendChild(opt);
+  });
+}
+
+/** onCatL1Change 一级分类变化时，更新二级分类下拉 */
+function onCatL1Change() {
+  const l1ID = parseInt(document.getElementById('pCatL1').value) || 0;
+  const l2 = document.getElementById('pCatL2');
+  l2.innerHTML = '<option value="">无（直接挂一级）</option>';
+  if (!l1ID) return;
+  allCategories.filter(c => c.parent_id === l1ID).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    l2.appendChild(opt);
+  });
+}
+
+/** loadCropSelector 加载作物多选标签 */
+async function loadCropSelector(selectedIDs = []) {
+  if (!allCrops.length) allCrops = await get('/api/crops');
+  const sel = new Set(selectedIDs);
+  const container = document.getElementById('pCropSelector');
+  container.innerHTML = '';
+  allCrops.forEach(c => {
+    const tag = document.createElement('span');
+    tag.className = 'select-tag' + (sel.has(c.id) ? ' on' : '');
+    tag.textContent = (sel.has(c.id) ? '✓ ' : '') + c.name;
+    tag.dataset.id = c.id;
+    tag.addEventListener('click', () => {
+      if (sel.has(c.id)) { sel.delete(c.id); tag.className = 'select-tag'; tag.textContent = c.name; }
+      else { sel.add(c.id); tag.className = 'select-tag on'; tag.textContent = '✓ ' + c.name; }
+    });
+    container.appendChild(tag);
+  });
+}
+
+/** loadTargetSelector 加载防治对象多选标签（按类型分组） */
+async function loadTargetSelector(selectedIDs = []) {
+  if (!allTargets.length) allTargets = await get('/api/targets');
+  const sel = new Set(selectedIDs);
+  const container = document.getElementById('pTargetSelector');
+  container.innerHTML = '';
+
+  const groups = { weed: [], pest: [], disease: [] };
+  const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
+  const typeClass = { weed: 'on', pest: 'on-pest', disease: 'on-disease' };
+  allTargets.forEach(t => { if (groups[t.type]) groups[t.type].push(t); });
+
+  ['weed','pest','disease'].forEach(type => {
+    if (!groups[type].length) return;
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'mb-2';
+    const label = document.createElement('div');
+    label.className = 'text-xs text-gray-500 mb-1 font-medium';
+    label.textContent = typeLabel[type];
+    groupDiv.appendChild(label);
+    groups[type].forEach(t => {
+      const tag = document.createElement('span');
+      const onClass = typeClass[type];
+      tag.className = 'select-tag' + (sel.has(t.id) ? ' ' + onClass : '');
+      tag.textContent = (sel.has(t.id) ? '✓ ' : '') + t.name;
+      tag.dataset.id = t.id;
+      tag.addEventListener('click', () => {
+        if (sel.has(t.id)) { sel.delete(t.id); tag.className = 'select-tag'; tag.textContent = t.name; }
+        else { sel.add(t.id); tag.className = 'select-tag ' + onClass; tag.textContent = '✓ ' + t.name; }
+      });
+      groupDiv.appendChild(tag);
+    });
+    container.appendChild(groupDiv);
+  });
+}
+
+/** getSelectedTagIDs 从 selector 容器中收集已选中的 id 列表 */
+function getSelectedTagIDs(containerID) {
+  const container = document.getElementById(containerID);
+  const ids = [];
+  container.querySelectorAll('.select-tag.on, .select-tag.on-pest, .select-tag.on-disease').forEach(tag => {
+    const id = parseInt(tag.dataset.id);
+    if (id) ids.push(id);
+  });
+  return ids;
+}
+
+/** submitProduct 提交产品表单（新增或更新） */
+async function submitProduct() {
+  const l1ID = parseInt(document.getElementById('pCatL1').value) || 0;
+  const l2ID = parseInt(document.getElementById('pCatL2').value) || 0;
+  const catID = l2ID || l1ID; // 有二级选二级，否则用一级
+
+  const body = {
+    category_id: catID,
+    name:     document.getElementById('pName').value.trim(),
+    dosage:   document.getElementById('pDosage').value.trim(),
+    usage:    document.getElementById('pUsage').value.trim(),
+    notes:    document.getElementById('pNotes').value.trim(),
+    is_active: parseInt(document.querySelector('[name="pActive"]:checked').value),
+    crop_ids:   getSelectedTagIDs('pCropSelector'),
+    target_ids: getSelectedTagIDs('pTargetSelector'),
+  };
+
+  if (!body.name)     { showToast('请输入产品名称', 'error'); return; }
+  if (!body.category_id) { showToast('请选择产品分类', 'error'); return; }
+
+  try {
+    if (editingProductID) {
+      await put('/api/products/' + editingProductID, body);
+      showToast('产品已更新');
+    } else {
+      await post('/api/products', body);
+      showToast('产品已创建');
+    }
+    closeModal('productModal');
+    productState.page = 1;
+    loadProducts();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+/** deleteProduct 删除产品（二次确认） */
+async function deleteProduct(id, name) {
+  if (!confirm(`确认删除产品「${name}」？此操作不可恢复。`)) return;
+  try {
+    await del('/api/products/' + id);
+    showToast('产品已删除');
+    loadProducts();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+/** toggleActive 切换产品上架/下架状态 */
+async function toggleActive(id, isActive) {
+  try {
+    await put('/api/products/' + id + '/active', { is_active: isActive });
+    showToast(isActive ? '产品已上架' : '产品已下架');
+    loadProducts();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 分类管理
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** loadCategories 加载并渲染分类树列表 */
+async function loadCategories() {
+  try {
+    // 强制刷新缓存
+    allCategories = await get('/api/categories/flat');
+    categoryTree  = await get('/api/categories');
+    renderCategoryTable();
+  } catch(e) {
+    showToast('加载分类失败：' + e.message, 'error');
+  }
+}
+
+/** renderCategoryTable 将分类树渲染为缩进表格 */
+function renderCategoryTable() {
+  let html = `<table class="admin-table w-full border-collapse">
+    <thead><tr class="border-b border-gray-200 text-left">
+      <th class="px-4 py-2.5">分类名称</th>
+      <th class="px-3 py-2.5">层级</th>
+      <th class="px-3 py-2.5">操作</th>
+    </tr></thead><tbody>`;
+
+  function renderNode(node, depth) {
+    const indent = depth * 20;
+    const levelText = depth === 0 ? '一级' : depth === 1 ? '二级' : '三级';
+    html += `<tr class="border-b border-gray-100">
+      <td class="px-4 py-2.5" style="padding-left:${16+indent}px">
+        ${depth > 0 ? '<span class="text-gray-300 mr-1">↳</span>' : ''}${esc(node.name)}
+      </td>
+      <td class="px-3 py-2.5 text-xs text-gray-400">${levelText}</td>
+      <td class="px-3 py-2.5 whitespace-nowrap">
+        <button onclick="openCategoryModal(${node.id},'${esc(node.name)}')" class="btn-ghost mr-1">编辑</button>
+        <button onclick="deleteCategory(${node.id},'${esc(node.name)}')" class="btn-danger">删除</button>
+      </td>
+    </tr>`;
+    (node.children || []).forEach(child => renderNode(child, depth+1));
+  }
+
+  categoryTree.forEach(node => renderNode(node, 0));
+  html += '</tbody></table>';
+  document.getElementById('categoryTableBody').innerHTML = html;
+}
+
+/** openCategoryModal 打开分类新增/编辑弹层 */
+async function openCategoryModal(id, name) {
+  editingCategoryID = id || null;
+  document.getElementById('categoryModalTitle').textContent = id ? '编辑分类' : '新增分类';
+  document.getElementById('cName').value = name || '';
+  document.getElementById('cParent').value = '0';
+
+  if (id) {
+    const cat = allCategories.find(c => c.id === id);
+    if (cat) document.getElementById('cParent').value = cat.parent_id;
+  }
+
+  // 确保分类父级下拉已填充
+  if (!allCategories.length) {
+    allCategories = await get('/api/categories/flat');
+    const cParent = document.getElementById('cParent');
+    cParent.innerHTML = '<option value="0">无（顶级分类）</option>';
+    allCategories.filter(c => c.parent_id === 0).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      cParent.appendChild(opt);
+    });
+  }
+
+  document.getElementById('categoryModal').classList.remove('hidden');
+}
+
+/** submitCategory 提交分类表单 */
+async function submitCategory() {
+  const parentID = parseInt(document.getElementById('cParent').value) || 0;
+  const name     = document.getElementById('cName').value.trim();
+  if (!name) { showToast('请输入分类名称', 'error'); return; }
+
+  try {
+    if (editingCategoryID) {
+      await put('/api/categories/' + editingCategoryID, { name });
+      showToast('分类已更新');
+    } else {
+      await post('/api/categories', { parent_id: parentID, name });
+      showToast('分类已创建');
+    }
+    allCategories = []; // 清缓存，下次重新加载
+    closeModal('categoryModal');
+    loadCategories();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+/** deleteCategory 删除分类（有产品/子分类时后端拒绝） */
+async function deleteCategory(id, name) {
+  if (!confirm(`确认删除分类「${name}」？`)) return;
+  try {
+    await del('/api/categories/' + id);
+    showToast('分类已删除');
+    allCategories = [];
+    loadCategories();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 作物管理
+// ═══════════════════════════════════════════════════════════════════════════
+
+let allCropsRaw = []; // 完整列表，供搜索过滤
+
+/** loadCropsTab 加载作物列表 */
+async function loadCropsTab() {
+  try {
+    allCropsRaw = await get('/api/crops');
+    allCrops = allCropsRaw; // 同步全局缓存
+    renderCropTable(allCropsRaw);
+  } catch(e) {
+    showToast('加载作物失败：' + e.message, 'error');
+  }
+}
+
+/** renderCropTable 渲染作物表格 */
+function renderCropTable(list) {
+  if (!list.length) {
+    document.getElementById('cropTableBody').innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">暂无数据</div>';
+    return;
+  }
+  const rows = list.map(c => `<tr class="border-b border-gray-100">
+    <td class="px-4 py-2.5">${esc(c.name)}</td>
+    <td class="px-3 py-2.5 whitespace-nowrap">
+      <button onclick="openCropModal(${c.id},'${esc(c.name)}')" class="btn-ghost mr-1">编辑</button>
+      <button onclick="deleteCrop(${c.id},'${esc(c.name)}')" class="btn-danger">删除</button>
+    </td>
+  </tr>`).join('');
+  document.getElementById('cropTableBody').innerHTML = `
+    <table class="admin-table w-full border-collapse">
+      <thead><tr class="border-b border-gray-200 text-left">
+        <th class="px-4 py-2.5">名称</th><th class="px-3 py-2.5">操作</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}
+
+/** openCropModal 打开作物新增/编辑弹层 */
+function openCropModal(id, name) {
+  editingCropID = id || null;
+  document.getElementById('cropModalTitle').textContent = id ? '编辑作物/场所' : '新增作物/场所';
+  document.getElementById('crName').value = name || '';
+  document.getElementById('cropModal').classList.remove('hidden');
+}
+
+/** submitCrop 提交作物表单 */
+async function submitCrop() {
+  const name = document.getElementById('crName').value.trim();
+  if (!name) { showToast('请输入名称', 'error'); return; }
+  try {
+    if (editingCropID) {
+      await put('/api/crops/' + editingCropID, { name });
+      showToast('已更新');
+    } else {
+      await post('/api/crops', { name });
+      showToast('已创建');
+    }
+    allCrops = []; // 清缓存
+    closeModal('cropModal');
+    loadCropsTab();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+/** deleteCrop 删除作物 */
+async function deleteCrop(id, name) {
+  if (!confirm(`确认删除「${name}」？`)) return;
+  try {
+    await del('/api/crops/' + id);
+    showToast('已删除');
+    allCrops = [];
+    loadCropsTab();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// 作物搜索框防抖
+let cropSearchTimer;
+document.getElementById('cropSearch').addEventListener('input', e => {
+  clearTimeout(cropSearchTimer);
+  cropSearchTimer = setTimeout(() => {
+    const kw = e.target.value.trim().toLowerCase();
+    renderCropTable(kw ? allCropsRaw.filter(c => c.name.toLowerCase().includes(kw)) : allCropsRaw);
+  }, 250);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 防治对象管理
+// ═══════════════════════════════════════════════════════════════════════════
+
+let allTargetsRaw = [];
+const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
+
+/** loadTargetsTab 加载防治对象列表 */
+async function loadTargetsTab() {
+  try {
+    allTargetsRaw = await get('/api/targets');
+    allTargets = allTargetsRaw;
+    renderTargetTable(allTargetsRaw);
+  } catch(e) {
+    showToast('加载失败：' + e.message, 'error');
+  }
+}
+
+/** renderTargetTable 渲染防治对象表格 */
+function renderTargetTable(list) {
+  if (!list.length) {
+    document.getElementById('targetTableBody').innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">暂无数据</div>';
+    return;
+  }
+  const rows = list.map(t => {
+    const typeBadge = `<span class="type-${t.type}">${typeLabel[t.type]||t.type}</span>`;
+    return `<tr class="border-b border-gray-100">
+      <td class="px-4 py-2.5">${esc(t.name)}</td>
+      <td class="px-3 py-2.5">${typeBadge}</td>
+      <td class="px-3 py-2.5 whitespace-nowrap">
+        <button onclick="openTargetModal(${t.id},'${esc(t.name)}','${t.type}')" class="btn-ghost mr-1">编辑</button>
+        <button onclick="deleteTarget(${t.id},'${esc(t.name)}')" class="btn-danger">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('targetTableBody').innerHTML = `
+    <table class="admin-table w-full border-collapse">
+      <thead><tr class="border-b border-gray-200 text-left">
+        <th class="px-4 py-2.5">名称</th><th class="px-3 py-2.5">类型</th><th class="px-3 py-2.5">操作</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}
+
+/** openTargetModal 打开防治对象新增/编辑弹层 */
+function openTargetModal(id, name, type) {
+  editingTargetID = id || null;
+  document.getElementById('targetModalTitle').textContent = id ? '编辑防治对象' : '新增防治对象';
+  document.getElementById('tName').value = name || '';
+  document.getElementById('tType').value = type || 'weed';
+  document.getElementById('targetModal').classList.remove('hidden');
+}
+
+/** submitTarget 提交防治对象表单 */
+async function submitTarget() {
+  const name = document.getElementById('tName').value.trim();
+  const type = document.getElementById('tType').value;
+  if (!name) { showToast('请输入名称', 'error'); return; }
+  try {
+    if (editingTargetID) {
+      await put('/api/targets/' + editingTargetID, { name, type });
+      showToast('已更新');
+    } else {
+      await post('/api/targets', { name, type });
+      showToast('已创建');
+    }
+    allTargets = [];
+    closeModal('targetModal');
+    loadTargetsTab();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+/** deleteTarget 删除防治对象 */
+async function deleteTarget(id, name) {
+  if (!confirm(`确认删除「${name}」？`)) return;
+  try {
+    await del('/api/targets/' + id);
+    showToast('已删除');
+    allTargets = [];
+    loadTargetsTab();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// 防治对象搜索 + 类型筛选
+function filterTargets() {
+  const kw   = document.getElementById('targetSearch').value.trim().toLowerCase();
+  const type = document.getElementById('targetTypeFilter').value;
+  const filtered = allTargetsRaw.filter(t =>
+    (!type || t.type === type) && (!kw || t.name.toLowerCase().includes(kw))
+  );
+  renderTargetTable(filtered);
+}
+
+let targetSearchTimer;
+document.getElementById('targetSearch').addEventListener('input', () => { clearTimeout(targetSearchTimer); targetSearchTimer = setTimeout(filterTargets, 250); });
+document.getElementById('targetTypeFilter').addEventListener('change', filterTargets);
+
+// 产品列表筛选框联动
+document.getElementById('productSearch').addEventListener('input', () => { productState.page=1; loadProducts(); });
+document.getElementById('productCatFilter').addEventListener('change', () => { productState.page=1; loadProducts(); });
+document.getElementById('productActiveFilter').addEventListener('change', () => { productState.page=1; loadProducts(); });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 通用弹层控制
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** closeModal 关闭指定弹层 */
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+// 点击遮罩关闭弹层
+['productModal','categoryModal','cropModal','targetModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal(id);
+  });
+});
+
+/** esc HTML 转义，防止 XSS */
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 页面初始化：默认进产品管理 Tab
+// ═══════════════════════════════════════════════════════════════════════════
+(async () => {
+  // 预加载分类数据（供产品筛选下拉和弹层复用）
+  await loadCategoryOptions();
+  loadProducts();
+})();
+</script>
+</body>
+</html>
