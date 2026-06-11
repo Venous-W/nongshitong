@@ -442,7 +442,7 @@
 
             // 按类型分组
             const groups = {};
-            const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
+            const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害', regulator: '调节剂' };
             filtered.forEach(t => {
                 if (!groups[t.type]) groups[t.type] = [];
                 groups[t.type].push(t);
@@ -599,7 +599,7 @@
             const cropTags = (p.crops || []).map(c =>
                 `<span class="tag-item tag-normal">${esc(c.name)}</span>`).join('');
             const tgtGroups = {};
-            const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
+            const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害', regulator: '调节剂' };
             (p.targets || []).forEach(t => {
                 if (!tgtGroups[t.type]) tgtGroups[t.type] = [];
                 tgtGroups[t.type].push(t);

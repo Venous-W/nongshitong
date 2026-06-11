@@ -43,6 +43,7 @@ func main() {
 		api.DELETE("/crops/:id", handler.DeleteCrop)
 
 		// 防治对象相关
+		api.GET("/targets/types", handler.GetTargetTypes)
 		api.GET("/targets", handler.GetAllTargets)
 		api.POST("/targets", handler.CreateTarget)
 		api.PUT("/targets/:id", handler.UpdateTarget)

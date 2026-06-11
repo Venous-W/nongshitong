@@ -158,8 +158,7 @@ func seedData() error {
 		{"叶霉病", "disease"}, {"蔓枯病", "disease"}, {"斑枯病", "disease"},
 		{"轮纹病", "disease"}, {"抗性白粉病", "disease"},
 		// 调节剂 (regulator)
-		{"促进生长", "regulator"}, {"提高抗逆性", "regulator"}, {"促进生长", "regulator"},
-		{"提高抗逆性", "regulator"}, {"增加产量", "regulator"}, {"改善品质", "regulator"},
+		{"促进生长", "regulator"}, {"提高抗逆性", "regulator"}, {"增加产量", "regulator"}, {"改善品质", "regulator"},
 		{"促进细胞分裂和伸长", "regulator"}, {"增强光合作用", "regulator"}, {"提高作物抗寒能力", "regulator"},
 		{"提高抗旱能力", "regulator"}, {"提高抗盐碱能力", "regulator"}, {"保花保果", "regulator"},
 		{"提高坐果率", "regulator"}, {"促进果实膨大", "regulator"}, {"增加糖分含量", "regulator"},

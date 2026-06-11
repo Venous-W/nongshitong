@@ -54,10 +54,8 @@
   .badge-on { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #E8F5E9; color: #2E7D32; }
   .badge-off { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #EEEEEE; color: #9E9E9E; }
 
-  /* 类型徽章 */
-  .type-weed { background: #E8F5E9; color: #2E7D32; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
-  .type-pest { background: #FFF8E1; color: #E65100; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
-  .type-disease { background: #FCE4EC; color: #C62828; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
+  /* 类型徽章（通用样式，颜色通过 JS 行内设置） */
+  .type-badge { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 11px; }
 
   /* Toast 提示 */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px;
@@ -141,9 +139,6 @@
       <button class="btn-primary" onclick="openTargetModal()">+ 新增防治对象</button>
       <select id="targetTypeFilter" class="form-select" style="width:140px">
         <option value="">全部类型</option>
-        <option value="weed">杂草</option>
-        <option value="pest">害虫</option>
-        <option value="disease">病害</option>
       </select>
       <input id="targetSearch" type="text" placeholder="搜索..." class="form-input" style="width:200px;padding:7px 10px">
     </div>
@@ -274,9 +269,6 @@
   <div class="mb-4">
     <label class="form-label">类型 *</label>
     <select id="tType" class="form-select">
-      <option value="weed">杂草 (weed)</option>
-      <option value="pest">害虫 (pest)</option>
-      <option value="disease">病害 (disease)</option>
     </select>
   </div>
   <div class="mb-5">
@@ -595,28 +587,27 @@ async function loadTargetSelector(selectedIDs = []) {
   const container = document.getElementById('pTargetSelector');
   container.innerHTML = '';
 
-  const groups = { weed: [], pest: [], disease: [] };
-  const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
-  const typeClass = { weed: 'on', pest: 'on-pest', disease: 'on-disease' };
+  // 使用全局 targetTypes 进行动态分组
+  const groups = {};
+  targetTypes.forEach(t => { groups[t.type] = []; });
   allTargets.forEach(t => { if (groups[t.type]) groups[t.type].push(t); });
 
-  ['weed','pest','disease'].forEach(type => {
-    if (!groups[type].length) return;
+  targetTypes.forEach(({type}) => {
+    if (!groups[type] || !groups[type].length) return;
     const groupDiv = document.createElement('div');
     groupDiv.className = 'mb-2';
     const label = document.createElement('div');
     label.className = 'text-xs text-gray-500 mb-1 font-medium';
-    label.textContent = typeLabel[type];
+    label.textContent = typeLabel[type] || type;
     groupDiv.appendChild(label);
     groups[type].forEach(t => {
       const tag = document.createElement('span');
-      const onClass = typeClass[type];
-      tag.className = 'select-tag' + (sel.has(t.id) ? ' ' + onClass : '');
+      tag.className = 'select-tag' + (sel.has(t.id) ? ' on' : '');
       tag.textContent = (sel.has(t.id) ? '✓ ' : '') + t.name;
       tag.dataset.id = t.id;
       tag.addEventListener('click', () => {
         if (sel.has(t.id)) { sel.delete(t.id); tag.className = 'select-tag'; tag.textContent = t.name; }
-        else { sel.add(t.id); tag.className = 'select-tag ' + onClass; tag.textContent = '✓ ' + t.name; }
+        else { sel.add(t.id); tag.className = 'select-tag on'; tag.textContent = '✓ ' + t.name; }
       });
       groupDiv.appendChild(tag);
     });
@@ -628,7 +619,7 @@ async function loadTargetSelector(selectedIDs = []) {
 function getSelectedTagIDs(containerID) {
   const container = document.getElementById(containerID);
   const ids = [];
-  container.querySelectorAll('.select-tag.on, .select-tag.on-pest, .select-tag.on-disease').forEach(tag => {
+  container.querySelectorAll('.select-tag.on').forEach(tag => {
     const id = parseInt(tag.dataset.id);
     if (id) ids.push(id);
   });
@@ -897,11 +888,43 @@ document.getElementById('cropSearch').addEventListener('input', e => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 let allTargetsRaw = [];
-const typeLabel = { weed: '杂草', pest: '害虫', disease: '病害' };
+let targetTypes = [];       // [{type, label}, ...] 来自 API
+let typeLabel = {};         // {weed:'杂草', pest:'害虫', ...}
+let typeColors = {          // 类型徽章颜色
+  weed:    { bg: '#E8F5E9', color: '#2E7D32' },
+  pest:    { bg: '#FFF8E1', color: '#E65100' },
+  disease: { bg: '#FCE4EC', color: '#C62828' },
+  regulator: { bg: '#E3F2FD', color: '#1565C0' },
+};
+
+/** loadTargetTypes 从后端加载有效的防治对象类型列表 */
+async function loadTargetTypes() {
+  try {
+    targetTypes = await get('/api/targets/types');
+    typeLabel = {};
+    targetTypes.forEach(t => { typeLabel[t.type] = t.label; });
+  // 填充类型筛选下拉
+  const filter = document.getElementById('targetTypeFilter');
+  filter.innerHTML = '<option value="">全部类型</option>';
+  // 填充防治对象弹窗类型下拉
+  const tType = document.getElementById('tType');
+  tType.innerHTML = '';
+  targetTypes.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.type;
+    opt.textContent = t.label + ' (' + t.type + ')';
+    filter.appendChild(opt.cloneNode(true));
+    tType.appendChild(opt);
+  });
+  } catch(e) {
+    console.warn('加载防治对象类型失败:', e.message);
+  }
+}
 
 /** loadTargetsTab 加载防治对象列表 */
 async function loadTargetsTab() {
   try {
+    await loadTargetTypes();
     allTargetsRaw = await get('/api/targets');
     allTargets = allTargetsRaw;
     renderTargetTable(allTargetsRaw);
@@ -917,7 +940,8 @@ function renderTargetTable(list) {
     return;
   }
   const rows = list.map(t => {
-    const typeBadge = `<span class="type-${t.type}">${typeLabel[t.type]||t.type}</span>`;
+    const tc = typeColors[t.type] || { bg: '#F5F5F5', color: '#555' };
+    const typeBadge = `<span class="type-badge" style="background:${tc.bg};color:${tc.color}">${typeLabel[t.type]||t.type}</span>`;
     return `<tr class="border-b border-gray-100">
       <td class="px-4 py-2.5">${esc(t.name)}</td>
       <td class="px-3 py-2.5">${typeBadge}</td>
@@ -940,7 +964,7 @@ function openTargetModal(id, name, type) {
   editingTargetID = id || null;
   document.getElementById('targetModalTitle').textContent = id ? '编辑防治对象' : '新增防治对象';
   document.getElementById('tName').value = name || '';
-  document.getElementById('tType').value = type || 'weed';
+  document.getElementById('tType').value = type || (targetTypes.length > 0 ? targetTypes[0].type : 'weed');
   document.getElementById('targetModal').classList.remove('hidden');
 }
 
