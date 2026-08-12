@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>农事通 · 界面风格 Demo</title>
+<style>
+/* ============ 设计 Token（来自 docs/UI设计规范.md） ============ */
+:root{
+  --green-900:#0B3D2E;
+  --green-700:#0E7A4E;
+  --green-500:#22B573;
+  --lime-300:#C9F33A;
+  --orange-500:#FF6B35;
+  --orange-200:#FFC7AE;
+  --paper:#FAF6EF;
+  --surface:#FFFFFF;
+  --ink:#123F2E;
+  --ink-weak:#5C746B;
+  --ink-faint:#8FA39A;
+  --line:#E7E0D2;
+  --line-strong:#D8CFBB;
+  --danger:#E5484D;
+  --success:#18A058;
+  --warn:#FFB020;
+  --tag-weed:#FF6B35;
+  --tag-pest:#E5484D;
+  --tag-disease:#2F7DE1;
+  --tag-reg:#8B5CF6;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:20px;
+  --radius-pill:999px;
+  --shadow-sm:0 1px 3px rgba(18,63,46,.08);
+  --shadow-md:0 6px 20px rgba(18,63,46,.10);
+  --shadow-lg:0 14px 40px rgba(18,63,46,.14);
+  --font:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;border:none;cursor:pointer;background:none}
+input,select,textarea{font-family:inherit}
+img{max-width:100%;display:block}
+.num{font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+
+/* ============ 通用 ============ */
+.page{max-width:1200px;margin:0 auto;padding:40px 20px 70px}
+.section-head{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.section-head .no{background:var(--green-900);color:var(--lime-300);font-weight:800;padding:4px 14px;border-radius:var(--radius-pill);font-size:13px;letter-spacing:1px}
+.section-head h2{font-size:26px;font-weight:800;letter-spacing:.5px}
+.section-head p{color:var(--ink-faint);font-size:13px;margin-top:2px}
+.section-head .demo-tip{margin-left:auto;color:var(--ink-faint);font-size:12px;background:#fff;border:1px dashed var(--line-strong);padding:4px 10px;border-radius:var(--radius-pill)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 26px;border-radius:var(--radius-pill);font-weight:700;font-size:14px;transition:.15s}
+.btn-primary{background:linear-gradient(135deg,var(--green-700),var(--green-500));color:#fff;box-shadow:var(--shadow-md)}
+.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-orange{background:linear-gradient(135deg,#FF7A45,var(--orange-500));color:#fff;box-shadow:var(--shadow-md)}
+.btn-orange:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn-ghost{background:#fff;color:var(--green-700);border:1.5px solid var(--line-strong)}
+.btn-ghost:hover{border-color:var(--green-500);background:#fff}
+.btn-sm{padding:6px 16px;font-size:13px}
+.btn-lime{background:var(--lime-300);color:var(--green-900);font-weight:800}
+.btn-lime:hover{filter:brightness(.96)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:var(--radius-pill);background:#fff;border:1.5px solid var(--line);color:var(--ink-weak);font-size:13px;font-weight:600;transition:.15s;white-space:nowrap}
+.pill:hover{border-color:var(--green-500);color:var(--green-700)}
+.pill.active{background:var(--lime-300);border-color:var(--lime-300);color:var(--green-900);font-weight:800;box-shadow:0 2px 8px rgba(201,243,58,.45)}
+.pill .cnt{font-size:11px;background:rgba(0,0,0,.08);border-radius:99px;padding:0 7px}
+
+.card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;transition:.18s}
+.card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px)}
+
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill)}
+.tag.crop{background:#E4F5E9;color:var(--green-700)}
+.tag.weed{background:#FFF0E8;color:var(--tag-weed)}
+.tag.pest{background:#FDEBEC;color:var(--tag-pest)}
+.tag.disease{background:#EAF1FE;color:var(--tag-disease)}
+.tag.reg{background:#F1ECFE;color:var(--tag-reg)}
+
+.sticker{position:absolute;top:12px;right:12px;font-size:12px;font-weight:800;padding:5px 12px;border-radius:var(--radius-sm);color:#fff;box-shadow:var(--shadow-md);letter-spacing:1px}
+.sticker.hot{background:linear-gradient(135deg,#FF7A45,var(--orange-500));transform:rotate(3deg)}
+.sticker.rec{background:linear-gradient(135deg,var(--green-700),var(--green-500));transform:rotate(-3deg)}
+
+/* ============ 顶部演示导航 ============ */
+.demo-rail{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 8px;box-shadow:var(--shadow-lg);display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:96vw}
+.demo-rail a{font-size:13px;font-weight:700;color:var(--ink-weak);padding:6px 14px;border-radius:var(--radius-pill)}
+.demo-rail a:hover{background:var(--lime-300);color:var(--green-900)}
+.demo-rail .brand{color:var(--green-700);font-weight:800;padding:6px 12px;display:inline-flex;align-items:center;gap:6px}
+
+/* ============ 01 查询页 ============ */
+.hero{background:linear-gradient(135deg,var(--green-900),var(--green-700));background-image:linear-gradient(135deg,var(--green-900),var(--green-700)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E");background-blend-mode:overlay;color:#fff;padding:90px 20px 56px;text-align:center;position:relative;overflow:hidden}
+.hero h1{font-size:40px;font-weight:900;letter-spacing:1px}
+.hero h1 span{color:var(--lime-300)}
+.hero .sub{color:rgba(255,255,255,.75);margin-top:8px;font-size:15px}
+.search-wrap{max-width:640px;margin:26px auto 0;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(12px);border-radius:var(--radius-pill);display:flex;align-items:center;padding:6px 6px 6px 22px;gap:8px}
+.search-wrap svg{flex:none;opacity:.9}
+.search-wrap input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:15px;min-width:0}
+.search-wrap input::placeholder{color:rgba(255,255,255,.6)}
+.search-wrap .btn{padding:11px 26px;background:var(--lime-300);color:var(--green-900)}
+.search-wrap .btn:hover{filter:brightness(.95);transform:none}
+
+.filter-panel{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:20px 22px;margin-top:-26px;position:relative;z-index:5}
+.step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.step:last-child{border-bottom:none}
+.step-name{flex:none;width:86px;font-weight:700;font-size:13px;color:var(--ink-weak);padding-top:9px}
+.step .pills{display:flex;flex-wrap:wrap;gap:8px}
+.step.hint-off .pills{opacity:.35;pointer-events:none}
+.step-hint{color:var(--ink-faint);font-size:12px;padding-top:9px}
+
+.chips-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;background:rgba(255,255,255,.6);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px 14px}
+.chips-bar .label{font-size:13px;font-weight:700;color:var(--ink-weak)}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--lime-300);color:var(--green-900);font-size:13px;font-weight:700;padding:5px 12px;border-radius:var(--radius-pill)}
+.chip b{cursor:pointer;font-size:13px;opacity:.6}
+.chip b:hover{opacity:1}
+.chip.hl{background:var(--orange-500);color:#fff}
+.chip.hl b{color:#fff}
+.chips-bar .clear{margin-left:auto;font-size:13px;color:var(--ink-faint);font-weight:600}
+.chips-bar .clear:hover{color:var(--danger)}
+
+.result-bar{display:flex;align-items:center;margin:22px 4px 14px}
+.result-bar .cnt{font-size:13px;color:var(--ink-weak)}
+.result-bar .cnt b{color:var(--green-700);font-size:16px}
+.sort-note{margin-left:auto;font-size:12px;color:var(--ink-faint)}
+.login-switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-weak);margin-left:14px;padding:4px 10px;background:#fff;border:1px solid var(--line);border-radius:99px}
+.login-switch input{accent-color:var(--green-700)}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.prod .thumb{position:relative;height:170px;display:flex;align-items:center;justify-content:center;font-size:64px;background:linear-gradient(135deg,#F4F8EE,#E9F3E4)}
+.prod .thumb.t2{background:linear-gradient(135deg,#FFF4E4,#FFEAD8)}
+.prod .thumb.t3{background:linear-gradient(135deg,#EAF1FE,#E4ECFA)}
+.prod .thumb.t4{background:linear-gradient(135deg,#F1ECFE,#ECE6FC)}
+.prod .thumb.t5{background:linear-gradient(135deg,#EAFBF0,#DFF6E8)}
+.prod-body{padding:16px 18px 18px}
+.prod .path{font-size:11px;color:var(--ink-faint);letter-spacing:.5px}
+.prod h3{font-size:17px;font-weight:800;margin:4px 0 10px;line-height:1.35}
+.prod .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.spec-row{background:#FBF8F0;border-radius:var(--radius-sm);padding:8px 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.spec-row .nm{font-size:12px;color:var(--ink-weak)}
+.spec-row .px{font-weight:800;font-size:15px;color:var(--ink)}
+.spec-row .px small{color:var(--ink-faint);font-weight:500;font-size:11px;margin-left:4px}
+.meta{font-size:12px;color:var(--ink-faint);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+.meta b{color:var(--orange-500);font-weight:800}
+.meta .stk{color:var(--ink-weak)}
+.meta .stk.low{color:var(--danger);font-weight:800}
+.note{font-size:12px;background:#FFF6EE;border-left:3px solid var(--orange-500);color:#8A4A1D;border-radius:4px;padding:6px 10px;margin-top:10px}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.foot .price{font-size:22px;font-weight:900;color:var(--orange-500)}
+.foot .price small{font-size:12px;color:var(--ink-faint);font-weight:600;margin-left:6px}
+.priv{display:none}
+.logged-in .priv{display:block}
+
+.pagination{display:flex;justify-content:center;gap:8px;margin-top:28px}
+.pagination button{min-width:38px;height:38px;border-radius:var(--radius-sm);font-weight:700;color:var(--ink-weak);background:#fff;border:1px solid var(--line)}
+.pagination button.active{background:var(--green-700);color:#fff;border-color:var(--green-700)}
+.pagination button:hover{border-color:var(--green-500)}
+
+/* ============ 02 产品详情 ============ */
+.breadcrumb{font-size:13px;color:var(--ink-faint);margin-bottom:18px}
+.breadcrumb b{color:var(--ink-weak);font-weight:600}
+.detail{display:grid;grid-template-columns:420px 1fr;gap:34px}
+.gallery .main{height:380px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:110px;background:linear-gradient(135deg,#F4F8EE,#E9F3E4);box-shadow:var(--shadow-sm);cursor:zoom-in;position:relative}
+.gallery .main .sticker{font-size:14px}
+.gallery .thumbs{display:flex;gap:10px;margin-top:12px}
+.gallery .thumbs div{flex:1;height:74px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:34px;background:#fff;border:2px solid var(--line);cursor:pointer}
+.gallery .thumbs div.on{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,181,115,.15)}
+.dinfo h1{font-size:26px;font-weight:900;line-height:1.3}
+.dinfo .path{color:var(--ink-faint);font-size:13px;margin:6px 0 12px}
+.price-ladder{border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--line);margin:18px 0}
+.price-ladder .row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#fff}
+.price-ladder .row + .row{border-top:1px dashed var(--line)}
+.price-ladder .nm{font-weight:700;flex:none}
+.price-ladder .price{font-weight:900;color:var(--orange-500);font-size:18px;margin-left:auto}
+.price-ladder .price small{font-size:12px;color:var(--ink-faint);font-weight:600;display:block;text-align:right}
+.price-ladder .comm{font-size:12px;color:var(--ink-weak);flex:none}
+.price-ladder .stkrow{font-size:12px;color:var(--ink-faint);flex:none}
+.usage{margin-top:18px}
+.usage .u-item{display:flex;gap:10px;font-size:13.5px;color:var(--ink-weak);margin-top:8px;align-items:flex-start}
+.usage .u-item b{color:var(--ink);font-weight:700;flex:none;width:70px}
+.detail-actions{display:flex;gap:12px;margin-top:24px}
+.actions-mini{display:flex;flex-direction:column;align-items:flex-end}
+
+/* ============ 03 下单弹窗 ============ */
+.overlay{position:fixed;inset:0;background:rgba(11,61,46,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg);max-width:520px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden}
+.modal-h{padding:22px 26px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-h h3{font-size:20px;font-weight:900}
+.modal-h .x{cursor:pointer;font-size:22px;color:var(--ink-faint);width:34px;height:34px;border-radius:99px}
+.modal-h .x:hover{background:#F3ECDE;color:var(--ink)}
+.modal-b{padding:20px 26px}
+.field{margin-bottom:16px}
+.field label{font-size:13px;font-weight:700;color:var(--ink-weak);display:block;margin-bottom:8px}
+.field label .req{color:var(--danger)}
+.field input,.field select{width:100%;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;transition:.15s;background:#fff}
+.field input:focus,.field select:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,181,115,.13)}
+.field .specs{display:flex;gap:8px;flex-wrap:wrap}
+.qty{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+.qty button{width:38px;height:40px;font-size:18px;font-weight:800;color:var(--green-700);background:#FBF8F0}
+.qty button:hover{background:var(--lime-300)}
+.qty input{width:56px;text-align:center;border:none;outline:none;font-size:16px;font-weight:800;background:#fff;height:40px}
+.calc-box{background:linear-gradient(135deg,var(--green-900),var(--green-700));border-radius:var(--radius-md);color:#fff;padding:16px 18px;margin-top:4px}
+.calc-box .r{display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,.8);margin-top:6px}
+.calc-box .r b{color:#fff}
+.calc-box .amount{font-size:30px;font-weight:900;display:flex;align-items:center;gap:8px}
+.calc-box .amount input{background:none;border:none;outline:none;color:var(--lime-300);font-size:30px;font-weight:900;width:140px;border-bottom:2px dashed rgba(201,243,58,.5);padding:0}
+.modal-f{padding:0 26px 26px;display:flex;gap:12px;justify-content:flex-end}
+.ship-line{font-size:13px;color:var(--ink-weak);line-height:2}
+.ship-line b{color:var(--ink)}
+
+/* ============ 04 个人页 ============ */
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.stat{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:24px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:99px;background:var(--lime-300);opacity:.18}
+.stat .l{font-size:13px;color:var(--ink-weak);font-weight:700}
+.stat .v{font-size:34px;font-weight:900;margin-top:6px;color:var(--ink);letter-spacing:-.5px}
+.stat .v.orange{color:var(--orange-500)}
+.stat .v.green{color:var(--green-700)}
+.stat .s{font-size:12px;color:var(--ink-faint);margin-top:4px}
+
+.table-wrap{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow-x:auto;margin-top:18px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+th{background:#F3ECDE;color:var(--ink-weak);text-align:left;padding:12px 14px;font-weight:700;white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:nth-child(even) td{background:#FBF8F0}
+tr:hover td{background:rgba(201,243,58,.10)}
+td .pm{font-weight:800}
+td .sub{font-size:11px;color:var(--ink-faint);display:block}
+.status{font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.status.s-pending{background:#FFF3DC;color:#B26A00}
+.status.s-ship{background:#E4F5E9;color:var(--green-700)}
+.status.s-done{background:var(--lime-300);color:var(--green-900)}
+.status.s-return{background:#FDEBEC;color:var(--danger)}
+.status.s-cancel{background:#EFEFEF;color:var(--ink-faint)}
+
+.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.quote-panel{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:20px}
+.quote-panel h4{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.quote-panel h4 .badge{font-size:10px;background:var(--lime-300);color:var(--green-900);padding:2px 8px;border-radius:99px}
+.quote{background:#FBF8F0;border-radius:var(--radius-md);padding:12px 14px;margin-top:10px;position:relative}
+.quote .t{font-size:14px;line-height:1.7}
+.quote .m{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.quote .who{font-size:11px;color:var(--ink-faint)}
+.quote .copy{font-size:12px;font-weight:700;color:var(--green-700);border:1px solid var(--line-strong);padding:3px 12px;border-radius:99px}
+.quote .copy:hover{background:var(--lime-300);border-color:var(--lime-300);color:var(--green-900)}
+
+/* ============ 05 管理看板 ============ */
+.dash-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.dash{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px;position:relative;overflow:hidden}
+.dash .l{font-size:13px;color:var(--ink-weak);font-weight:700}
+.dash .v{font-size:32px;font-weight:900;margin-top:4px}
+.dash .v.o{color:var(--orange-500)}
+.dash .v.g{color:var(--green-700)}
+.dash .d{font-size:12px;color:var(--ink-faint);margin-top:2px}
+.dash .bar{position:absolute;left:0;bottom:0;height:5px;width:100%;background:linear-gradient(90deg,var(--green-500),var(--lime-300))}
+.dash .bar.warn{background:linear-gradient(90deg,#FF7A45,var(--orange-500))}
+.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:18px}
+.rank-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.rank-row:last-child{border:none}
+.rank-row .rk{flex:none;width:26px;height:26px;border-radius:8px;background:#F3ECDE;color:var(--ink-weak);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+.rank-row .rk.t{background:linear-gradient(135deg,#FFC107,#FF9800);color:#fff}
+.rank-row .who{width:120px;font-weight:700;font-size:13px}
+.rank-row .track{flex:1;height:10px;border-radius:99px;background:#F3ECDE;overflow:hidden}
+.rank-row .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green-500),var(--lime-300))}
+.rank-row .val{font-weight:800;font-size:13px;color:var(--ink);width:90px;text-align:right}
+.hot-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.hot-item:last-child{border:none}
+.hot-item .e{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#F4F8EE,#E9F3E4);flex:none}
+.hot-item .nm{font-size:13px;font-weight:700}
+.hot-item .track{flex:1;height:8px;border-radius:99px;background:#F3ECDE;overflow:hidden}
+.hot-item .fill{height:100%;background:linear-gradient(90deg,var(--green-500),var(--lime-300));border-radius:99px}
+.hot-item .cnt{font-size:12px;color:var(--ink-faint);width:70px;text-align:right}
+.warn-note{font-size:12px;color:var(--warn);font-weight:700}
+.panel{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:22px}
+.panel h4{font-size:15px;font-weight:800;margin-bottom:6px}
+
+/* ============ 06 登录页 ============ */
+.login-sec{background:linear-gradient(135deg,var(--green-900),var(--green-700));background-image:linear-gradient(135deg,var(--green-900),var(--green-700)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E");background-blend-mode:overlay;border-radius:var(--radius-lg);padding:60px 20px;display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:center;color:#fff}
+.login-sec .lt h2{font-size:34px;font-weight:900}
+.login-sec .lt h2 span{color:var(--lime-300)}
+.login-sec .lt p{color:rgba(255,255,255,.75);margin-top:10px;font-size:14px;max-width:420px}
+.login-card{background:#fff;color:var(--ink);border-radius:var(--radius-lg);padding:30px;box-shadow:var(--shadow-lg)}
+.login-card .lc-t{font-size:20px;font-weight:900;margin-bottom:20px}
+.login-card .lc-t small{display:block;font-size:12px;color:var(--ink-faint);font-weight:500;margin-top:4px}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green-900);color:#fff;padding:13px 26px;border-radius:var(--radius-pill);font-size:14px;font-weight:700;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:200;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--danger)}
+
+.demo-foot{text-align:center;color:var(--ink-faint);font-size:12px;padding:30px 20px 40px}
+.demo-foot b{color:var(--green-700)}
+
+@media(max-width:1100px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .detail{grid-template-columns:1fr}
+  .gallery .main{height:300px}
+  .dash-cards{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+  .hero h1{font-size:28px}
+  .grid{grid-template-columns:1fr}
+  .stat-cards{grid-template-columns:1fr}
+  .quote-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .login-sec{grid-template-columns:1fr}
+  .demo-rail{display:none}
+  .section-head h2{font-size:21px}
+}
+</style>
+</head>
+<body class="logged-in">
+
+<!-- 顶部演示导航 -->
+<nav class="demo-rail">
+  <span class="brand">🌾 农事通</span>
+  <a href="#s1">① 查询页</a>
+  <a href="#s2">② 产品详情</a>
+  <a href="#s3">③ 下单</a>
+  <a href="#s4">④ 个人页</a>
+  <a href="#s5">⑤ 管理看板</a>
+  <a href="#s6">⑥ 登录</a>
+</nav>
+
+<!-- ============ 01 查询页 ============ -->
+<section id="s1" style="padding-top:20px">
+  <div class="hero">
+    <h1>今天，用点什么<span>药</span>？</h1>
+    <p class="sub">按作物 · 防治对象，2 秒找到对路的药</p>
+    <div class="search-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="white" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      <input placeholder="搜索产品名，如：草甘膦、吡虫啉、芸苔素…">
+      <button class="btn btn-lime">搜索</button>
+    </div>
+  </div>
+
+  <div class="page" style="padding-top:0">
+    <div class="filter-panel">
+      <!-- 一级分类 -->
+      <div class="step">
+        <span class="step-name">① 一级分类</span>
+        <div class="pills" id="step1">
+          <button class="pill" data-key="chucao" data-sub="1">除草</button>
+          <button class="pill" data-key="shachong" data-sub="1">杀虫</button>
+          <button class="pill" data-key="shajun" data-sub="0">杀菌</button>
+          <button class="pill" data-key="tiaojie" data-sub="0">调节剂</button>
+          <button class="pill" data-key="yemianfei" data-sub="0">叶面肥</button>
+          <button class="pill" data-key="banzhongji" data-sub="1">拌种剂</button>
+        </div>
+      </div>
+      <!-- 二级分类（联动） -->
+      <div class="step" id="step2wrap">
+        <span class="step-name">② 二级分类</span>
+        <div class="pills" id="step2">
+          <button class="pill" data-parent="chucao">灭生性除草剂</button>
+          <button class="pill" data-parent="chucao">封闭除草剂</button>
+          <button class="pill" data-parent="chucao">玉米除草</button>
+          <button class="pill" data-parent="chucao">小麦除草</button>
+          <button class="pill" data-parent="chucao">夏季除草剂单剂</button>
+          <button class="pill" data-parent="shachong">地下害虫</button>
+          <button class="pill" data-parent="shachong">青虫肉虫</button>
+          <button class="pill" data-parent="banzhongji">小麦</button>
+          <button class="pill" data-parent="banzhongji">花生</button>
+        </div>
+        <span class="step-hint" id="step2hint" style="display:none">该一级分类无二级，自动跳至「选作物」→</span>
+      </div>
+      <!-- 作物 -->
+      <div class="step">
+        <span class="step-name">③ 选作物</span>
+        <div class="pills">
+          <button class="pill">玉米</button>
+          <button class="pill">小麦</button>
+          <button class="pill">花生</button>
+          <button class="pill">大豆</button>
+          <button class="pill">水稻</button>
+          <button class="pill">蔬菜</button>
+          <button class="pill">果园</button>
+          <button class="pill">田埂</button>
+          <button class="pill">路边</button>
+          <button class="pill">铁路沿线</button>
+        </div>
+      </div>
+      <!-- 防治对象 -->
+      <div class="step">
+        <span class="step-name">④ 防治对象</span>
+        <div class="pills">
+          <button class="pill"><span style="color:var(--tag-weed)">●</span>马唐</button>
+          <button class="pill"><span style="color:var(--tag-weed)">●</span>狗尾草</button>
+          <button class="pill"><span style="color:var(--tag-pest)">●</span>蚜虫</button>
+          <button class="pill"><span style="color:var(--tag-pest)">●</span>稻螟虫</button>
+          <button class="pill"><span style="color:var(--tag-disease)">●</span>白粉病</button>
+          <button class="pill"><span style="color:var(--tag-disease)">●</span>锈病</button>
+        </div>
+      </div>
+
+      <div class="chips-bar">
+        <span class="label">已选条件</span>
+        <span class="chip">除草 <b>✕</b></span>
+        <span class="chip">玉米 <b>✕</b></span>
+        <span class="chip hl">马唐 <b>✕</b></span>
+        <button class="clear">一键清空</button>
+      </div>
+    </div>
+
+    <div class="result-bar">
+      <span class="cnt">共 <b class="num">8</b> 款产品 · 按权重 + 角标排序</span>
+      <span class="sort-note">🔍 未登录只展示 名称 / 分类 / 作物 / 防治对象 / 图片，价格等为内部字段</span>
+      <label class="login-switch"><input type="checkbox" checked id="loginTog"> 登录态预览</label>
+    </div>
+
+    <div class="grid">
+      <article class="card prod">
+        <div class="thumb"><span>🌿</span><span class="sticker rec">本月推荐</span></div>
+        <div class="prod-body">
+          <div class="path">除草 · 灭生性除草剂</div>
+          <h3>41%草甘膦异丙胺盐 · 水剂</h3>
+          <div class="tags"><span class="tag crop">果园</span><span class="tag crop">田埂</span><span class="tag crop">路边</span><span class="tag weed">马唐</span><span class="tag weed">芦苇</span></div>
+          <div class="spec-row"><span class="nm">25公斤</span><span class="px num">¥55 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥2</b>/件</span><span class="stk num">库存 <b class="stk">186</b></span></div>
+            <div class="note">📌 果园清园性价比之王，走量款，主推！</div>
+          </div>
+          <div class="foot"><span class="price num">¥55<small>10件以上¥50</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t3"><span>🌽</span><span class="sticker hot">最近热销</span></div>
+        <div class="prod-body">
+          <div class="path">除草 · 玉米除草</div>
+          <h3>30%硝磺草酮悬浮剂</h3>
+          <div class="tags"><span class="tag crop">玉米</span><span class="tag weed">马唐</span><span class="tag weed">狗尾草</span><span class="tag weed">牛筋草</span></div>
+          <div class="spec-row"><span class="nm">1公斤</span><span class="px num">¥130 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥5</b>/件</span><span class="stk num">库存 <b class="stk">64</b></span></div>
+            <div class="note">📌 玉米田苗后封地，药效好回款快。</div>
+          </div>
+          <div class="foot"><span class="price num">¥130<small>10件以上¥120</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb"><span>🐛</span><span class="sticker hot">最近热销</span></div>
+        <div class="prod-body">
+          <div class="path">杀虫 · 青虫肉虫</div>
+          <h3>5%阿维菌素 · 高效氯氟氰菊酯</h3>
+          <div class="tags"><span class="tag crop">水稻</span><span class="tag crop">蔬菜</span><span class="tag pest">稻螟虫</span><span class="tag pest">卷叶螟</span><span class="tag pest">蚜虫</span></div>
+          <div class="spec-row"><span class="nm">200毫升×50</span><span class="px num">¥90 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥3</b>/件</span><span class="stk num">库存 <b class="stk">210</b></span></div>
+            <div class="note">📌 虫卵同杀，农户复购率最高的杀虫剂。</div>
+          </div>
+          <div class="foot"><span class="price num">¥90<small>10件以上¥82</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t4"><span>🍄</span></div>
+        <div class="prod-body">
+          <div class="path">杀菌</div>
+          <h3>5%苯醚甲环唑水分散粒剂</h3>
+          <div class="tags"><span class="tag crop">小麦</span><span class="tag crop">花生</span><span class="tag crop">水稻</span><span class="tag disease">白粉病</span><span class="tag disease">锈病</span></div>
+          <div class="spec-row"><span class="nm">500克</span><span class="px num">¥68 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥2</b>/件</span><span class="stk num">库存 <b class="stk">95</b></span></div>
+          </div>
+          <div class="foot"><span class="price num">¥68<small>10件以上¥62</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t5"><span>🌱</span></div>
+        <div class="prod-body">
+          <div class="path">调节剂</div>
+          <h3>0.01%芸苔素内酯可溶液剂</h3>
+          <div class="tags"><span class="tag crop">小麦</span><span class="tag crop">水稻</span><span class="tag crop">果树类</span><span class="tag reg">调节</span></div>
+          <div class="spec-row"><span class="nm">100毫升×60</span><span class="px num">¥45 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥1</b>/件</span><span class="stk num">库存 <b class="stk">340</b></span></div>
+          </div>
+          <div class="foot"><span class="price num">¥45<small>10件以上¥40</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t2"><span>🧪</span></div>
+        <div class="prod-body">
+          <div class="path">叶面肥</div>
+          <h3>磷酸二氢钾 99% 晶体</h3>
+          <div class="tags"><span class="tag crop">通用</span><span class="tag crop">小麦</span><span class="tag crop">花生</span><span class="tag reg">调节</span></div>
+          <div class="spec-row"><span class="nm">25公斤</span><span class="px num">¥160 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥4</b>/件</span><span class="stk low num">库存不足 · 8</span></div>
+            <div class="note">⚠️ 库存不足，下单请提前沟通补货。</div>
+          </div>
+          <div class="foot"><span class="price num">¥160<small>10件以上¥150</small></span><button class="btn btn-ghost btn-sm" onclick="toast('库存不足，无法下单','err')">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t3"><span>🐜</span></div>
+        <div class="prod-body">
+          <div class="path">拌种剂 · 小麦</div>
+          <h3>35%吡虫啉悬浮种衣剂</h3>
+          <div class="tags"><span class="tag crop">小麦</span><span class="tag crop">花生</span><span class="tag pest">蚜虫</span><span class="tag pest">金针虫</span></div>
+          <div class="spec-row"><span class="nm">1公斤</span><span class="px num">¥75 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥3</b>/件</span><span class="stk num">库存 <b class="stk">120</b></span></div>
+          </div>
+          <div class="foot"><span class="price num">¥75<small>10件以上¥68</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+
+      <article class="card prod">
+        <div class="thumb t4"><span>🌾</span></div>
+        <div class="prod-body">
+          <div class="path">除草 · 小麦除草</div>
+          <h3>15%双氟磺草胺 · 氯氟吡氧乙酸</h3>
+          <div class="tags"><span class="tag crop">小麦</span><span class="tag weed">播娘蒿</span><span class="tag weed">猪殃殃</span></div>
+          <div class="spec-row"><span class="nm">100毫升×40</span><span class="px num">¥85 <small>/件</small></span></div>
+          <div class="priv">
+            <div class="meta"><span>提成 <b class="num">¥2</b>/件</span><span class="stk num">库存 <b class="stk">53</b></span></div>
+          </div>
+          <div class="foot"><span class="price num">¥85<small>10件以上¥78</small></span><button class="btn btn-primary btn-sm" onclick="openOrder(this)">下单</button></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="pagination">
+      <button>‹</button><button class="active">1</button><button>2</button><button>3</button><button>›</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 产品详情 ============ -->
+<section id="s2">
+  <div class="page">
+    <div class="section-head">
+      <span class="no">SCREEN 02</span>
+      <h2>产品详情页</h2>
+      <span class="demo-tip">可开多标签对比 · 返回保留筛选</span>
+    </div>
+    <div class="breadcrumb">首页 / 除草 / 灭生性除草剂 / <b>41%草甘膦异丙胺盐</b></div>
+    <div class="detail">
+      <div class="gallery">
+        <div class="main"><span style="font-size:120px">🌿</span><span class="sticker rec">本月推荐</span></div>
+        <div class="thumbs">
+          <div class="on">🌿</div><div>📦</div><div>🏷️</div>
+        </div>
+      </div>
+      <div class="dinfo">
+        <div class="path">除草 · 灭生性除草剂</div>
+        <h1>41%草甘膦异丙胺盐 · 水剂</h1>
+        <div class="tags" style="margin-top:10px">
+          <span class="tag crop">果园</span><span class="tag crop">田埂</span><span class="tag crop">路边</span>
+          <span class="tag weed">马唐</span><span class="tag weed">芦苇</span><span class="tag weed">狗牙根</span>
+        </div>
+        <div class="price-ladder priv">
+          <div class="row">
+            <span class="nm">25公斤</span>
+            <span class="comm">提成 ¥2/件</span>
+            <span class="stkrow num">库存 186</span>
+            <span class="price num">¥55<small>10件以下</small></span>
+            <span class="price num" style="color:var(--green-700)">¥50<small>10件以上</small></span>
+          </div>
+          <div class="row">
+            <span class="nm">10公斤</span>
+            <span class="comm">提成 ¥1/件</span>
+            <span class="stkrow num">库存 186</span>
+            <span class="price num">¥26<small>10件以下</small></span>
+            <span class="price num" style="color:var(--green-700)">¥23<small>10件以上</small></span>
+          </div>
+        </div>
+        <div class="note" style="margin-top:0">📌 老板备注：果园清园性价比之王，走量款，主推！</div>
+        <div class="usage">
+          <div class="u-item"><b>用量</b><span>每亩 200-300 毫升，兑水 30 公斤均匀喷雾</span></div>
+          <div class="u-item"><b>适用作物</b><span>果园、田埂、路边、铁路沿线等非耕地</span></div>
+          <div class="u-item"><b>防治对象</b><span>马唐、芦苇、狗牙根、牛筋草等一年生及多年生杂草</span></div>
+          <div class="u-item"><b>使用方式</b><span>杂草生长旺盛期茎叶喷雾，避开大风天</span></div>
+          <div class="u-item"><b>注意事项</b><span>严禁喷到作物叶片；施药后 6 小时内下雨需重喷</span></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn btn-primary" onclick="openOrder(this)">下单</button>
+          <button class="btn btn-ghost">收藏</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 下单弹窗 ============ -->
+<section id="s3">
+  <div class="page">
+    <div class="section-head">
+      <span class="no">SCREEN 03</span>
+      <h2>下单流程</h2>
+      <span class="demo-tip">阶梯价自动算建议实收 · 可手动改 · 库存自动扣减</span>
+    </div>
+    <div class="panel" style="text-align:center;padding:40px">
+      <p style="font-size:15px;color:var(--ink-weak)">点击产品卡片上的「下单」按钮体验完整下单流程</p>
+      <button class="btn btn-orange" style="margin-top:16px" onclick="openOrder(null,'detail')">模拟下单 · 41%草甘膦</button>
+    </div>
+  </div>
+</section>
+
+<!-- 下单弹窗 -->
+<div class="overlay" id="orderOv">
+  <div class="modal">
+    <div class="modal-h">
+      <h3>下单</h3>
+      <button class="x" onclick="closeOv('orderOv')">✕</button>
+    </div>
+    <div class="modal-b">
+      <div class="field">
+        <label>产品规格</label>
+        <div class="specs" id="specPills">
+          <button class="pill active" data-p="55" data-p2="50" data-c="2">25公斤 <small style="font-size:11px;opacity:.6">¥55/¥50</small></button>
+          <button class="pill" data-p="26" data-p2="23" data-c="1">10公斤 <small style="font-size:11px;opacity:.6">¥26/¥23</small></button>
+        </div>
+      </div>
+      <div class="field">
+        <label>数量</label>
+        <div class="qty">
+          <button onclick="qty(-1)">−</button>
+          <input id="qty" value="5" readonly>
+          <button onclick="qty(1)">＋</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink-faint);margin-top:6px">数量 ≥ 10 自动用「10件以上」价（阶梯阈值可全局配置）</div>
+      </div>
+      <div class="calc-box">
+        <div class="amount">建议实收 <input id="amount" value="275" oninput="calcAmt()"> 元</div>
+        <div class="r"><span>单价（当前阶梯）</span><b id="unitShow" class="num">¥55 /件</b></div>
+        <div class="r"><span>我的提成</span><b class="num" id="commShow">¥10</b></div>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>客户信息 <span class="req">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <input placeholder="客户姓名" value="张三">
+          <input placeholder="手机号" value="13812345678">
+        </div>
+        <input placeholder="收货地址（省/市/县/乡/村）" value="河南省驻马店市上蔡县杨集镇杨集村">
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOv('orderOv')">取消</button>
+      <button class="btn btn-orange" onclick="confirmOrder()">确认下单</button>
+    </div>
+  </div>
+</div>
+
+<!-- 二次确认弹窗 -->
+<div class="overlay" id="confirmOv">
+  <div class="modal">
+    <div class="modal-h"><h3>确认提交订单？</h3><button class="x" onclick="closeOv('confirmOv')">✕</button></div>
+    <div class="modal-b">
+      <div class="ship-line">
+        <b>客户姓名:</b> 张三<br>
+        <b>手机号:</b> 13812345678<br>
+        <b>收货地址:</b> 河南省驻马店市上蔡县杨集镇杨集村<br>
+        <b>产品规格:</b> 41%草甘膦异丙胺盐 - <span id="cSpec">25公斤</span> × <span id="cQty" class="num">5</span><br>
+        <b>实收金额:</b> <span id="cAmt" class="num">275</span>元<br>
+        <b>订单编号:</b> SO20260812001<br>
+        <b>下单人:</b> 李四（销售）
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="closeOv('confirmOv')">再改改</button>
+      <button class="btn btn-orange" onclick="submitOrder()">确认提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 04 个人页 ============ -->
+<section id="s4">
+  <div class="page">
+    <div class="section-head">
+      <span class="no">SCREEN 04</span>
+      <h2>个人页 · 销售小李</h2>
+      <span class="demo-tip">按提成周期 · 发货口径统计</span>
+    </div>
+    <div class="stat-cards">
+      <div class="stat">
+        <div class="l">本月销售额</div>
+        <div class="v num">¥86,420</div>
+        <div class="s">较上月 +12.4%</div>
+      </div>
+      <div class="stat">
+        <div class="l">本月提成</div>
+        <div class="v orange num">¥3,186</div>
+        <div class="s">已发货 42 单计入</div>
+      </div>
+      <div class="stat">
+        <div class="l">本月订单数</div>
+        <div class="v green num">58</div>
+        <div class="s">待发货 6 单 · 待处理</div>
+      </div>
+    </div>
+
+    <h3 style="margin:28px 0 4px;font-weight:800;font-size:17px">我的发货记录</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>订单编号</th><th>下单时间</th><th>产品规格 × 数量</th><th>客户</th><th>实收</th><th>提成</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="pm">SO20260812001</span><span class="sub">2026-08-12 09:41</span></td>
+            <td>08-12 09:41</td>
+            <td><span class="pm">41%草甘膦 · 25公斤 × 5</span><span class="sub">¥275</span></td>
+            <td><span class="pm">张三</span><span class="sub">138****5678 · 河南上蔡</span></td>
+            <td class="num">¥275</td>
+            <td class="num" style="color:var(--orange-500);font-weight:800">¥10</td>
+            <td><span class="status s-pending">未发货</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('发货信息已复制')">复制</button> <button class="btn btn-lime btn-sm" onclick="toast('已打开打印面单')">打印</button> <button class="btn btn-ghost btn-sm" onclick="toast('订单已取消，库存回退')">取消</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">SO20260810024</span><span class="sub">2026-08-10 15:02</span></td>
+            <td>08-10 15:02</td>
+            <td><span class="pm">硝磺草酮 · 1公斤 × 12</span><span class="sub">¥1,560</span></td>
+            <td><span class="pm">王强</span><span class="sub">139****3321 · 山东菏泽</span></td>
+            <td class="num">¥1,560</td>
+            <td class="num" style="color:var(--orange-500);font-weight:800">¥60</td>
+            <td><span class="status s-ship">已发货</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('发货信息已复制')">复制</button> <button class="btn btn-lime btn-sm" onclick="toast('已打开打印面单')">打印</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">SO20260806005</span><span class="sub">2026-08-06 10:20</span></td>
+            <td>08-06 10:20</td>
+            <td><span class="pm">苯醚甲环唑 · 500克 × 8</span><span class="sub">¥544</span></td>
+            <td><span class="pm">刘桂芳</span><span class="sub">137****9088 · 河南周口</span></td>
+            <td class="num">¥544</td>
+            <td class="num" style="color:var(--orange-500);font-weight:800">¥16</td>
+            <td><span class="status s-done">已签收</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('发货信息已复制')">复制</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">SO20260801012</span><span class="sub">2026-08-01 08:55</span></td>
+            <td>08-01 08:55</td>
+            <td><span class="pm">阿维菌素 · 200ml×50 × 6</span><span class="sub">¥540</span></td>
+            <td><span class="pm">赵铁柱</span><span class="sub">150****1200 · 河北沧州</span></td>
+            <td class="num">¥540</td>
+            <td class="num" style="color:var(--orange-500);font-weight:800">¥18</td>
+            <td><span class="status s-return">退回</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('发货信息已复制')">复制</button> <button class="btn btn-lime btn-sm" onclick="toast('已重新发货，库存扣减')">重新发货</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">SO20260728033</span><span class="sub">2026-07-28 16:40</span></td>
+            <td>07-28 16:40</td>
+            <td><span class="pm">芸苔素 · 100ml×60 × 20</span><span class="sub">¥900</span></td>
+            <td><span class="pm">孙丽</span><span class="sub">158****7766 · 安徽亳州</span></td>
+            <td class="num">¥900</td>
+            <td class="num" style="color:var(--ink-faint);font-weight:800">—</td>
+            <td><span class="status s-cancel">已取消</span></td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="quote-grid">
+      <div class="quote-panel">
+        <h4>我的销售语录 <span class="badge">个人</span></h4>
+        <div class="quote">
+          <div class="t">“草甘膦这单，别急着报低价，把 10 件以上的阶梯价算给他看，农户一算就下单。” </div>
+          <div class="m"><span class="who">李四 · 2026-08-10</span><button class="copy" onclick="toast('语录已复制')">复制</button></div>
+        </div>
+        <div class="quote">
+          <div class="t">“玉米田苗后，先问农户前茬用过啥，避免残留药害。” </div>
+          <div class="m"><span class="who">李四 · 2026-08-02</span><button class="copy" onclick="toast('语录已复制')">复制</button></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="toast('已打开新增语录')">＋ 新增语录</button>
+      </div>
+      <div class="quote-panel">
+        <h4>公共语录 <span class="badge" style="background:var(--orange-500);color:#fff">全员</span></h4>
+        <div style="margin-bottom:12px">
+          <button class="pill active" style="padding:4px 12px;font-size:12px">全部</button>
+          <button class="pill" style="padding:4px 12px;font-size:12px">我上传的</button>
+        </div>
+        <div class="quote">
+          <div class="t">“卖药先卖服务：先教农户看准防治时期，再报价，单子稳。”</div>
+          <div class="m"><span class="who">王强 · 2026-08-09</span><button class="copy" onclick="toast('语录已复制')">复制</button></div>
+        </div>
+        <div class="quote">
+          <div class="t">“老客户回访时提一嘴退货政策，农户心里踏实，复购率高。”</div>
+          <div class="m"><span class="who">刘桂芳 · 2026-07-30</span><button class="copy" onclick="toast('语录已复制')">复制</button></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="toast('已打开新增语录')">＋ 分享到公共</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 管理看板 ============ -->
+<section id="s5">
+  <div class="page">
+    <div class="section-head">
+      <span class="no">SCREEN 05</span>
+      <h2>管理端 · 数据看板</h2>
+      <span class="demo-tip">提成周期：自然月（8月1日 - 8月31日）· 发货口径</span>
+    </div>
+    <div class="dash-cards">
+      <div class="dash"><div class="l">销售总额（实收）</div><div class="v o num">¥286,150</div><div class="d">较上月 +8.2%</div><div class="bar"></div></div>
+      <div class="dash"><div class="l">订单数</div><div class="v num">214</div><div class="d">日均 6.9 单</div><div class="bar"></div></div>
+      <div class="dash"><div class="l">提成总额</div><div class="v g num">¥9,720</div><div class="d">已发货 132 单计入</div><div class="bar"></div></div>
+      <div class="dash"><div class="l">待发货</div><div class="v num" style="color:var(--warn)">23</div><div class="d">建议当天发出</div><div class="bar warn"></div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h4>销售排行</h4>
+        <div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">按提成总额 · 本月</div>
+        <div class="rank-row"><span class="rk t">1</span><span class="who">王强</span><div class="track"><div class="fill" style="width:96%"></div></div><span class="val num">¥3,868</span></div>
+        <div class="rank-row"><span class="rk t">2</span><span class="who">李四</span><div class="track"><div class="fill" style="width:79%"></div></div><span class="val num">¥3,186</span></div>
+        <div class="rank-row"><span class="rk">3</span><span class="who">刘桂芳</span><div class="track"><div class="fill" style="width:52%"></div></div><span class="val num">¥2,110</span></div>
+        <div class="rank-row"><span class="rk">4</span><span class="who">赵铁柱</span><div class="track"><div class="fill" style="width:34%"></div></div><span class="val num">¥1,386</span></div>
+        <div class="rank-row"><span class="rk">5</span><span class="who">孙丽</span><div class="track"><div class="fill" style="width:28%"></div></div><span class="val num">¥1,120</span></div>
+      </div>
+      <div class="panel">
+        <h4>产品热销 TOP</h4>
+        <div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">按订单数 · 本月</div>
+        <div class="hot-item"><span class="e">🌿</span><div><div class="nm">41%草甘膦异丙胺盐</div></div><div class="track"><div class="fill" style="width:100%"></div></div><span class="cnt num">48 单</span></div>
+        <div class="hot-item"><span class="e">🌽</span><div><div class="nm">30%硝磺草酮</div></div><div class="track"><div class="fill" style="width:83%"></div></div><span class="cnt num">40 单</span></div>
+        <div class="hot-item"><span class="e">🐛</span><div><div class="nm">5%阿维菌素·高效氯氰</div></div><div class="track"><div class="fill" style="width:71%"></div></div><span class="cnt num">34 单</span></div>
+        <div class="hot-item"><span class="e">🍄</span><div><div class="nm">5%苯醚甲环唑</div></div><div class="track"><div class="fill" style="width:52%"></div></div><span class="cnt num">25 单</span></div>
+      </div>
+    </div>
+
+    <h3 style="margin:28px 0 4px;font-weight:800;font-size:17px">库存预警 <span class="warn-note">低于阈值（20 件）自动高亮</span></h3>
+    <div class="table-wrap">
+      <table style="min-width:720px">
+        <thead><tr><th>产品</th><th>分类</th><th>库存</th><th>阈值</th><th>状态</th><th>建议</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="pm">磷酸二氢钾 99% 晶体</span><span class="sub">25公斤</span></td>
+            <td>叶面肥</td>
+            <td><b style="color:var(--danger)" class="num">8</b></td>
+            <td class="num">20</td>
+            <td><span class="status s-return">严重不足</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('已提醒补货')">提醒补货</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">15%双氟·氯氟吡</span><span class="sub">100毫升×40</span></td>
+            <td>除草 · 小麦除草</td>
+            <td><b style="color:var(--warn)" class="num">15</b></td>
+            <td class="num">20</td>
+            <td><span class="status s-pending">偏低</span></td>
+            <td><button class="btn btn-ghost btn-sm" onclick="toast('已提醒补货')">提醒补货</button></td>
+          </tr>
+          <tr>
+            <td><span class="pm">35%吡虫啉种衣剂</span><span class="sub">1公斤</span></td>
+            <td>拌种剂 · 小麦</td>
+            <td class="num">120</td>
+            <td class="num">20</td>
+            <td><span class="status s-done">正常</span></td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 登录页 ============ -->
+<section id="s6">
+  <div class="page">
+    <div class="section-head">
+      <span class="no">SCREEN 06</span>
+      <h2>登录页</h2>
+      <span class="demo-tip">手机号 + 密码 · 角色鉴权</span>
+    </div>
+    <div class="login-sec">
+      <div class="lt">
+        <h2>🌾 农事通<span>·</span></h2>
+        <h2 style="margin-top:6px">让每一笔生意都算得清</h2>
+        <p>查询、下单、提成、看板一体化。未登录可浏览产品与用法，登录后解锁价格、库存与下单。</p>
+        <p style="margin-top:14px;font-size:13px;color:rgba(255,255,255,.6)">内部工具 · 局域网使用 · 数据不出内网</p>
+      </div>
+      <div class="login-card">
+        <div class="lc-t">账号登录<small>使用手机号 + 密码</small></div>
+        <div class="field">
+          <label>手机号</label>
+          <input placeholder="请输入手机号" value="138****5678">
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input type="password" placeholder="请输入密码" value="••••••••">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="toast('登录成功，欢迎回来，李四')">登 录</button>
+        <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--ink-faint)">忘记密码？联系管理员重置</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="demo-foot">—— 农事通 · 界面风格 Demo ——<br>颜色/字体/布局仅供参考，<b>示例数据均为演示用途</b>，非真实价格</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* 登录态预览开关 */
+const loginTog=document.getElementById('loginTog');
+loginTog.addEventListener('change',()=>document.body.classList.toggle('logged-in',loginTog.checked));
+
+/* 筛选胶囊多选 */
+document.querySelectorAll('#step1 .pill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    p.classList.toggle('active');
+    syncStep2();
+  });
+});
+document.querySelectorAll('#step2 .pill,#step3 .pills .pill,#step4 .pills .pill').forEach(p=>{
+  p.addEventListener('click',()=>p.classList.toggle('active'));
+});
+function syncStep2(){
+  const sel=[...document.querySelectorAll('#step1 .pill.active')];
+  const wrap=document.getElementById('step2wrap');
+  const hint=document.getElementById('step2hint');
+  const pills=[...document.querySelectorAll('#step2 .pill')];
+  const noSub=sel.length>0 && sel.every(p=>p.dataset.sub==='0');
+  pills.forEach(p=>{
+    const ok = sel.length===0 || sel.some(s=>p.dataset.parent===s.dataset.key);
+    p.style.display = ok?'':'none';
+  });
+  hint.style.display = noSub?'inline':'none';
+}
+
+/* 已选条件 chips 交互 */
+document.querySelectorAll('.chip b').forEach(x=>x.addEventListener('click',function(){this.parentNode.remove()}));
+document.querySelector('.chips-bar .clear').addEventListener('click',()=>{
+  document.querySelectorAll('.chips-bar .chip').forEach(c=>c.remove());
+});
+
+/* Toast */
+let toastTimer;
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.toggle('err',type==='err');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* 下单弹窗 */
+let curSpec={p:55,p2:50,c:2},qtyVal=5;
+function openOrder(btn,mode){
+  document.getElementById('orderOv').classList.add('show');
+  updateCalc();
+}
+function closeOv(id){document.getElementById(id).classList.remove('show')}
+document.getElementById('specPills').addEventListener('click',e=>{
+  const p=e.target.closest('.pill');
+  if(!p)return;
+  [...p.parentNode.children].forEach(x=>x.classList.remove('active'));
+  p.classList.add('active');
+  curSpec={p:+p.dataset.p,p2:+p.dataset.p2,c:+p.dataset.c};
+  updateCalc();
+});
+function qty(d){
+  qtyVal=Math.max(1,qtyVal+d);
+  document.getElementById('qty').value=qtyVal;
+  updateCalc();
+}
+function updateCalc(){
+  const unit=qtyVal>=10?curSpec.p2:curSpec.p;
+  document.getElementById('unitShow').textContent='¥'+unit+' /件';
+  document.getElementById('commShow').textContent='¥'+(curSpec.c*qtyVal);
+  const amt=document.getElementById('amount');
+  amt.value=unit*qtyVal;
+}
+function calcAmt(){ /* 手动改实收不影响单价与提成 */ }
+function confirmOrder(){
+  const spec=document.querySelector('#specPills .pill.active');
+  document.getElementById('cSpec').textContent=spec.textContent.replace(/¥.*$/,'').trim();
+  document.getElementById('cQty').textContent=document.getElementById('qty').value;
+  document.getElementById('cAmt').textContent=document.getElementById('amount').value;
+  closeOv('orderOv');
+  document.getElementById('confirmOv').classList.add('show');
+}
+function submitOrder(){
+  closeOv('confirmOv');
+  toast('订单已提交 · 库存已自动扣减 · 提成 ¥'+curSpec.c*qtyVal);
+}
+</script>
+</body>
+</html>
